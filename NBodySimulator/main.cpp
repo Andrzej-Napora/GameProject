@@ -16,11 +16,11 @@ int main()
         sf::Event event;
         while (gameWindow.getWindow().pollEvent(event))
         {
-            if (currentGameState == GameState::Starting_menu && event.type == sf::Event::KeyPressed)
-            {
-                if (event.type == sf::Event::Closed)
-                    gameWindow.getWindow().close();
+            if (event.type == sf::Event::Closed)
+                gameWindow.getWindow().close();
 
+            if (currentGameState == GameState::Starting_menu && event.type == sf::Event::KeyPressed)
+            {           
                 if (event.key.code == sf::Keyboard::Enter)
                 {
                     switch (selectedIndex)

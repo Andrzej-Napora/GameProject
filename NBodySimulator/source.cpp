@@ -21,9 +21,9 @@ Menu::Menu(string menu_title, int optionsSize, vector<string> labels, sf::Font& 
 
     font = font_arg;
 
-    selector.setSize({ 500.f,50.f });
+    selector.setSize({ 500.f,60.f });
     selector.setFillColor(sf::Color(255, 255, 255, 100));
-    selector.setOrigin(250.f, 25.f);
+    selector.setOrigin(250.f, 30.f);
 
     title.setFont(font);
     title.setString(menu_title);
