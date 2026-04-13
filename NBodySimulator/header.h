@@ -5,15 +5,22 @@
 #include <SFML/Graphics/Text.hpp>
 #include <iostream>
 #include <vector>
+#include <random>
+#include <deque>
 
 using std::cout;
 using std::cerr;
 using std::endl;
 using std::string;
 using std::vector;
+using std::deque;
 
 //rozne GameState'y, w ktorych bedzie znajdowac sie gra
 enum class GameState {Starting_menu, Playing, Pause_menu, Ranking_list, Settings, Load_list};
+
+
+
+
 
 //Klasa zarzadzajaca oknem gry
 class GameWindow
@@ -33,6 +40,11 @@ public:
 	//funkcja tworzaca okno o dowolnych wymiarach
 	void setWindow(unsigned int width, unsigned int height);
 };
+
+
+
+
+
 
 //klasa do tworzenia roznych menu, np menu startowego i menu pause
 class Menu
@@ -56,3 +68,62 @@ public:
 	const vector<sf::Text>& getOptions() const;
 	const vector<float>& getSelectorPositions() const;
 };
+
+
+
+
+
+//klasa zarzadzajaca ptakiem
+class Bird
+{
+private:
+	sf::RectangleShape birdShape;
+	sf::Vector2f velocity;
+	float gravity;
+	float jump;
+public:
+	Bird();
+	void setVelocity(float x, float y);
+	sf::RectangleShape getBirdShape();
+	void birdUpdate(float dt);
+	void inputHandle();
+};
+
+
+
+
+
+//pojedyncza przeszkoda
+class Obstacle
+{
+protected:
+	sf::RectangleShape obstacle;
+	sf::Vector2f velocity;
+	float yPosition;
+	float xPosition;
+	float xSize;
+	float ySize;
+public:
+	Obstacle(float xPosition, float yPosition, float xSize, float ySize, float velX, float velY);
+	const sf::RectangleShape& getObs() const;
+	void updateObstacle(float dt);
+};
+
+
+
+
+
+//zestaw przeszkod
+class ObstacleQueue
+{
+private:
+	deque<Obstacle> obstacleQueue;
+	float spawnTimer;
+public:
+	ObstacleQueue();
+	float& getSpawnTimer();
+	deque<Obstacle>& getQueue();
+	void addRandomObstacle(int randomValue);
+};
+
+

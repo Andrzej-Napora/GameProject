@@ -2,14 +2,25 @@
 
 int main()
 {
+
+    //generator liczb losowych
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> dist(0,100);
+    int randomValue = dist(gen);
+
+    sf::Clock clock;
+
     //zmienna przechowuajca czcionke
     sf::Font font1;
     font1.loadFromFile("Cabin-SemiBold.ttf");
 
-
+    //tworzenie obiektow poszczegolnych klas
     GameWindow gameWindow;
-    Menu startingMenu("FLOPPY BIRDS", 4, {"Play","Load game","Ranking list","Settings","Exit"}, font1);
+    Menu startingMenu("FLAPPY BIRDS", 4, {"Play","Load game","Ranking list","Settings","Exit"}, font1);
     GameState currentGameState = GameState::Starting_menu;
+    Bird bird;
+    ObstacleQueue obstacleQueue;
 
     //selectedIndex wskazuje na opcje, na ktorej graficznie znajduej sie selector
     int selectedIndex = 0;
@@ -17,6 +28,10 @@ int main()
     //glowna petla programu
     while (gameWindow.getWindow().isOpen())
     {
+        //zmienna dt sluzy do uniezaleznienie ruchu obietkow od szybkosci dzialania komputera
+        sf::Time time = clock.restart();
+        float dt = time.asSeconds();
+
         sf::Event event;
         //petla rejestrujaca eventy
         while (gameWindow.getWindow().pollEvent(event))
@@ -51,19 +66,25 @@ int main()
                 }
 
                 //obsluga selectedIndex, wskazuje na opcje, na ktorej graficznie znajduej sie selector
-                else if (event.key.code == sf::Keyboard::W)
+                else if (event.key.code == sf::Keyboard::W || event.key.code == sf::Keyboard::Up)
                 {
                     selectedIndex--;
                     if (selectedIndex < 0)
                         selectedIndex = startingMenu.getMenuCount()-1;
                 }
-                else if (event.key.code == sf::Keyboard::S)
+                else if (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down)
                 {
                     selectedIndex++;
                     if (selectedIndex > startingMenu.getMenuCount()-1)
                         selectedIndex = 0;
                 }
 
+            }
+            //obluga klawaitury i myszy podczas grania
+            if (currentGameState == GameState::Playing && event.type == sf::Event::KeyPressed)
+            {
+                if(event.key.code == sf::Keyboard::Space || event.key.code == sf::Mouse::Left)
+                    bird.inputHandle();
             }
 
         }
@@ -84,9 +105,25 @@ int main()
         //rysujemy GameState Playing
         else if (currentGameState == GameState::Playing)
         {
-            sf::Text playText("W trakcie gry", font1, 50);
-            playText.setPosition({ 250.f, 150.f });
-            gameWindow.getWindow().draw(playText);
+            //aktualizujemy predkosc ptaka, w zaleznosci czy zostal wcisniety "jump"
+            bird.birdUpdate(dt);
+
+            //sprawdzamy spawnTimer, po przekroczeniu 2sec pojawia sie nowa przeszkoda(jeszcze nie ma obslugi usuwania starych przeszkod)
+            obstacleQueue.getSpawnTimer() += dt;
+            if (obstacleQueue.getSpawnTimer() > 2)
+            {
+                randomValue = dist(gen);
+                obstacleQueue.addRandomObstacle(randomValue);
+                obstacleQueue.getSpawnTimer() = 0;
+            }
+
+            //petla obslugujaca wszystkie przeszkody naraz, przesuwamy je i rysujemy
+            for (auto& obstacle : obstacleQueue.getQueue())
+            {
+                obstacle.updateObstacle(dt);
+                gameWindow.getWindow().draw(obstacle.getObs());
+            }
+            gameWindow.getWindow().draw(bird.getBirdShape());
         }
 
         //wyswietlamy to co narysowalismy
