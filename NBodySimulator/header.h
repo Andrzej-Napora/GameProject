@@ -18,6 +18,8 @@ using std::deque;
 //rozne GameState'y, w ktorych bedzie znajdowac sie gra
 enum class GameState {Starting_menu, Playing, Pause_menu, Ranking_list, Settings, Load_list};
 
+const int window_size = 800;
+
 
 
 
@@ -105,7 +107,8 @@ protected:
 	float ySize;
 public:
 	Obstacle(float xPosition, float yPosition, float xSize, float ySize, float velX, float velY);
-	const sf::RectangleShape& getObs() const;
+	float getXPosition();
+	const sf::RectangleShape& getObstacle() const;
 	void updateObstacle(float dt);
 };
 
@@ -119,11 +122,16 @@ class ObstacleQueue
 private:
 	deque<Obstacle> obstacleQueue;
 	float spawnTimer;
+	float removeTimer;
 public:
 	ObstacleQueue();
 	float& getSpawnTimer();
+	float& getRemoveTimer();
 	deque<Obstacle>& getQueue();
 	void addRandomObstacle(int randomValue);
+	void obstacleRemover();
+	void removeObstacleCondition(float dt);
+	void spawnObstacleCondition(float dt, int randomValue);
 };
 
 

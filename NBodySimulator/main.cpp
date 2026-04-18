@@ -81,7 +81,7 @@ int main()
 
             }
             //obluga klawaitury i myszy podczas grania
-            if (currentGameState == GameState::Playing && event.type == sf::Event::KeyPressed)
+            if (currentGameState == GameState::Playing && (event.type == sf::Event::KeyPressed || event.type == sf::Event::MouseButtonPressed))
             {
                 if(event.key.code == sf::Keyboard::Space || event.key.code == sf::Mouse::Left)
                     bird.inputHandle();
@@ -108,20 +108,16 @@ int main()
             //aktualizujemy predkosc ptaka, w zaleznosci czy zostal wcisniety "jump"
             bird.birdUpdate(dt);
 
-            //sprawdzamy spawnTimer, po przekroczeniu 2sec pojawia sie nowa przeszkoda(jeszcze nie ma obslugi usuwania starych przeszkod)
-            obstacleQueue.getSpawnTimer() += dt;
-            if (obstacleQueue.getSpawnTimer() > 2)
-            {
-                randomValue = dist(gen);
-                obstacleQueue.addRandomObstacle(randomValue);
-                obstacleQueue.getSpawnTimer() = 0;
-            }
+            //obsluga generowania i usuwania przeszkod
+            randomValue = dist(gen);
+            obstacleQueue.spawnObstacleCondition(dt, randomValue);
+            obstacleQueue.removeObstacleCondition(dt);
 
             //petla obslugujaca wszystkie przeszkody naraz, przesuwamy je i rysujemy
             for (auto& obstacle : obstacleQueue.getQueue())
             {
                 obstacle.updateObstacle(dt);
-                gameWindow.getWindow().draw(obstacle.getObs());
+                gameWindow.getWindow().draw(obstacle.getObstacle());
             }
             gameWindow.getWindow().draw(bird.getBirdShape());
         }

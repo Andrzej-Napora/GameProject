@@ -1,9 +1,14 @@
 #include "header.h"
 
+
+//********************************************************************************************************************
+//Klasa GameWindow
+//********************************************************************************************************************
+
 //konstruktor domyslny
-GameWindow::GameWindow():width(800), height(800)
+GameWindow::GameWindow():width(window_size), height(window_size)
 {
-	window.create(sf::VideoMode( 800,800 ), "Flappy birds - Menu");
+	window.create(sf::VideoMode(window_size, window_size), "Flappy birds - Menu");
     window.setFramerateLimit(60);
 }
 
@@ -24,9 +29,9 @@ void GameWindow::setWidth(unsigned int width) { this->width = width; }
 void GameWindow::setHight(unsigned int height) { this->height = height; }
 sf::RenderWindow& GameWindow::getWindow() { return window; }
 
-
-
-
+//********************************************************************************************************************
+//Klasa Menu
+//********************************************************************************************************************
 
 Menu::Menu(string menu_title, int optionsSize, vector<string> labels, sf::Font& font_arg)
 {
@@ -73,8 +78,12 @@ const vector<float>& Menu::getSelectorPositions() const { return selectorPositio
 
 
 
+//********************************************************************************************************************
+//Klasa Bird
+//********************************************************************************************************************
+
 //konstruktor prostego ptaka
-Bird::Bird() : birdShape({ 40.f,40.f }), velocity(0.f,0.f), gravity(30.f),jump(-2000.f)
+Bird::Bird() : birdShape({ 70.f,70.f }), velocity(0.f,0.f), gravity(100.f),jump(-4000.f)
 {
     birdShape.setFillColor(sf::Color::Yellow);
     birdShape.setOutlineColor(sf::Color::White);
@@ -101,8 +110,9 @@ void Bird::inputHandle()
 }
 
 
-
-
+//********************************************************************************************************************
+//Klasa Obstacle
+//********************************************************************************************************************
 
 //konstruktor prostych przeszkod
 Obstacle::Obstacle(float xPosition, float yPosition, float xSize, float ySize, float velX, float velY):
@@ -114,19 +124,23 @@ Obstacle::Obstacle(float xPosition, float yPosition, float xSize, float ySize, f
     obstacle.setFillColor(sf::Color::White);
 }
 
-const sf::RectangleShape& Obstacle::getObs() const { return obstacle; }
+float Obstacle::getXPosition() { return xPosition; }
+
+const sf::RectangleShape& Obstacle::getObstacle() const { return obstacle; }
 
 void Obstacle::updateObstacle(float dt)
 {
     //zmienna dt zapewnia, ze ruch obiektu bedzie zalezny od czasu, ktory minal od ostatniego update,
     //a nie od tego jak szybko dziala komputer   
     obstacle.move( velocity.x * dt,velocity.y * dt);
+    xPosition += velocity.x * dt;
+    yPosition += velocity.y * dt;
 }
 
 
-
-
-
+//********************************************************************************************************************
+//Klasa ObstacleQueue
+//********************************************************************************************************************
 
 ObstacleQueue::ObstacleQueue() :spawnTimer(0.f){}
 
@@ -134,14 +148,47 @@ float& ObstacleQueue::getSpawnTimer() { return spawnTimer; }
 
 deque<Obstacle>& ObstacleQueue::getQueue(){return obstacleQueue;}
 
-//prymitywny generator losowych przeszkod
+float& ObstacleQueue::getRemoveTimer() { return removeTimer; }
+
+//generator losowych przeszkod
 void ObstacleQueue::addRandomObstacle(int randomValue)
 {
-    sf::Vector2f velocity = {-50.f,0.f};
-    float yPosition = 8 * randomValue;
+    sf::Vector2f velocity = {-100.f,0.f};
     float xPosition = 800;
+
+    float yPosition = 600-(1.5*randomValue);
     float xSize = 50;
-    float ySize = 200 + 2 * randomValue;
-    Obstacle obs(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
-    obstacleQueue.push_back(obs);
+    float ySize =window_size - yPosition;
+    Obstacle obsBottom(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
+    obstacleQueue.push_back(obsBottom);
+
+    yPosition = 0;
+    xSize = 50;
+    ySize = 300 - (1.5 * randomValue);
+    Obstacle obsUpper(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
+    obstacleQueue.push_back(obsUpper);
+}
+
+
+//co dwie sekund usuwamy wszystkie przeszkoda, ktore wyszly poza lewa krawedz ekranu
+void ObstacleQueue::removeObstacleCondition(float dt)
+{
+    removeTimer += dt;
+    if (removeTimer > 2)
+    {
+        while (obstacleQueue[0].getXPosition() < -50)
+            obstacleQueue.pop_front();
+        removeTimer = 0;
+    }
+}
+
+//co dwie sekundy generujemy nowa przeszkode
+void ObstacleQueue::spawnObstacleCondition(float dt, int randomValue)
+{
+    spawnTimer += dt;
+    if (spawnTimer > 2)
+    {
+        addRandomObstacle(randomValue);
+        spawnTimer = 0;
+    }
 }
