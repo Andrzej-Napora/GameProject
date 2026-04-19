@@ -145,6 +145,8 @@ void Obstacle::updateObstacle(float dt)
 //********************************************************************************************************************
 
 vector<Obstacle>& DoubleObstacle::getdoubleObs() { return doubleObs; }
+
+//funkcja sprawdzajaca, czy ptak dotknal ktoras z przeszkod
 bool DoubleObstacle::collisionCheck(Bird& bird)
 {
     float upperYBird = bird.getBirdShape().getPosition().y - bird.getRadius()+30.f;
@@ -155,7 +157,7 @@ bool DoubleObstacle::collisionCheck(Bird& bird)
     float upperYObs2 = doubleObs[0].getYPosition();
     float bottomYObs2 = doubleObs[0].getYPosition() + doubleObs[0].getYSize();
 
-    std::cout << "=== collisionCheck ==="<<endl;
+    std::cout << " collisionCheck "<<endl;
     std::cout << "Ptak:          top=" << upperYBird << " bottom=" << bottomYBird << endl;
     std::cout << "Obs[1] gorna:  top=" << upperYObs << " bottom=" << bottomYObs << endl;
     std::cout << "Obs[0] dolna:  top=" << upperYObs2 << " bottom=" << bottomYObs2 << endl;
