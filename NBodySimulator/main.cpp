@@ -9,8 +9,6 @@ int main()
     std::uniform_int_distribution<int> dist(0,100);
     int randomValue = dist(gen);
 
-    sf::Clock clock;
-
     //zmienna przechowuajca czcionke
     sf::Font font1;
     font1.loadFromFile("Cabin-SemiBold.ttf");
@@ -21,16 +19,20 @@ int main()
     GameState currentGameState = GameState::Starting_menu;
     Bird bird;
     ObstacleQueue obstacleQueue;
+    Score score;
 
     //selectedIndex wskazuje na opcje, na ktorej graficznie znajduej sie selector
     int selectedIndex = 0;
+
+    // 60 aktualizacji na sekundę 
+    sf::Clock clock;
 
     //glowna petla programu
     while (gameWindow.getWindow().isOpen())
     {
         //zmienna dt sluzy do uniezaleznienie ruchu obietkow od szybkosci dzialania komputera
-        sf::Time time = clock.restart();
-        float dt = time.asSeconds();
+        float dt = clock.restart().asSeconds();
+        dt = std::min(dt, 0.05f);
 
         sf::Event event;
         //petla rejestrujaca eventy
@@ -105,6 +107,7 @@ int main()
         //rysujemy GameState Playing
         else if (currentGameState == GameState::Playing)
         {
+
             //aktualizujemy predkosc ptaka, w zaleznosci czy zostal wcisniety "jump"
             bird.birdUpdate(dt);
 
@@ -113,13 +116,29 @@ int main()
             obstacleQueue.spawnObstacleCondition(dt, randomValue);
             obstacleQueue.removeObstacleCondition(dt);
 
-            //petla obslugujaca wszystkie przeszkody naraz, przesuwamy je i rysujemy
+            //petla aktualizujaca wszystkie przeszkody naraz
             for (auto& obstacle : obstacleQueue.getQueue())
             {
-                obstacle.updateObstacle(dt);
-                gameWindow.getWindow().draw(obstacle.getObstacle());
+                obstacle.getdoubleObs()[0].updateObstacle(dt);
+                obstacle.getdoubleObs()[1].updateObstacle(dt);
+            }
+            score.incrementScore(dt);
+
+            DoubleObstacle* obsWsk = obstacleQueue.birdBetweenObstacles(bird);
+            if (obsWsk != nullptr)
+            {
+                if (obsWsk->collisionCheck(bird))
+                    currentGameState = GameState::Starting_menu;
+
+            }
+            //rysujemy
+            for (auto& obstacle : obstacleQueue.getQueue())
+            {
+                gameWindow.getWindow().draw(obstacle.getdoubleObs()[0].getObstacle());
+                gameWindow.getWindow().draw(obstacle.getdoubleObs()[1].getObstacle());
             }
             gameWindow.getWindow().draw(bird.getBirdShape());
+            gameWindow.getWindow().draw(score.getText());
         }
 
         //wyswietlamy to co narysowalismy

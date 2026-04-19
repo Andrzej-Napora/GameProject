@@ -83,14 +83,16 @@ const vector<float>& Menu::getSelectorPositions() const { return selectorPositio
 //********************************************************************************************************************
 
 //konstruktor prostego ptaka
-Bird::Bird() : birdShape({ 70.f,70.f }), velocity(0.f,0.f), gravity(100.f),jump(-4000.f)
+Bird::Bird() : birdShape(45.f), velocity(0.f,0.f), gravity(550.f),jump(-250.f)
 {
+    radius = 45.f;
     birdShape.setFillColor(sf::Color::Yellow);
     birdShape.setOutlineColor(sf::Color::White);
     birdShape.setOrigin({20.f,20.f});
     birdShape.setPosition({ 200.f,400.f });
 };
-sf::RectangleShape Bird::getBirdShape() { return birdShape; }
+sf::CircleShape Bird::getBirdShape() { return birdShape; }
+const float Bird::getRadius() const { return radius; }
 
 void Bird::setVelocity(float x, float y)
 {
@@ -99,14 +101,13 @@ void Bird::setVelocity(float x, float y)
 }
 void Bird::birdUpdate(float dt)
 {
-    //zmienna dt zapewnia, ze ruch obiektu bedzie zalezny od czasu, ktory minal od ostatniego update,
-    //a nie od tego jak szybko dziala komputer   
-    birdShape.move(velocity.x * dt, (velocity.y + gravity) *dt);
-    velocity = { 0.f,0.f };
+    velocity.y += gravity * dt;
+    birdShape.move(velocity.x * dt, velocity.y * dt);
 }
+
 void Bird::inputHandle()
 {
-    velocity.y += jump;
+    velocity.y = jump;
 }
 
 
@@ -124,8 +125,10 @@ Obstacle::Obstacle(float xPosition, float yPosition, float xSize, float ySize, f
     obstacle.setFillColor(sf::Color::White);
 }
 
-float Obstacle::getXPosition() { return xPosition; }
-
+const float Obstacle::getXSize() const { return xSize; }
+const float Obstacle::getYSize() const { return ySize; }
+const float Obstacle::getXPosition() const { return xPosition; }
+const float Obstacle::getYPosition() const { return yPosition; }
 const sf::RectangleShape& Obstacle::getObstacle() const { return obstacle; }
 
 void Obstacle::updateObstacle(float dt)
@@ -137,6 +140,40 @@ void Obstacle::updateObstacle(float dt)
     yPosition += velocity.y * dt;
 }
 
+//********************************************************************************************************************
+//Klasa DoubleObstacle
+//********************************************************************************************************************
+
+vector<Obstacle>& DoubleObstacle::getdoubleObs() { return doubleObs; }
+bool DoubleObstacle::collisionCheck(Bird& bird)
+{
+    float upperYBird = bird.getBirdShape().getPosition().y - bird.getRadius()+30.f;
+    float bottomYBird = bird.getBirdShape().getPosition().y + bird.getRadius()-30.f;
+    float upperYObs = doubleObs[1].getYPosition();
+    float bottomYObs = doubleObs[1].getYPosition() + doubleObs[1].getYSize();
+
+    float upperYObs2 = doubleObs[0].getYPosition();
+    float bottomYObs2 = doubleObs[0].getYPosition() + doubleObs[0].getYSize();
+
+    std::cout << "=== collisionCheck ==="<<endl;
+    std::cout << "Ptak:          top=" << upperYBird << " bottom=" << bottomYBird << endl;
+    std::cout << "Obs[1] gorna:  top=" << upperYObs << " bottom=" << bottomYObs << endl;
+    std::cout << "Obs[0] dolna:  top=" << upperYObs2 << " bottom=" << bottomYObs2 << endl;
+
+    bool kolizjaGorna = (upperYObs < upperYBird && upperYBird < bottomYObs)
+        || (upperYObs < bottomYBird && bottomYBird < bottomYObs);
+
+    bool kolizjaDolna = (upperYObs2 < upperYBird && upperYBird < bottomYObs2)
+        || (upperYObs2 < bottomYBird && bottomYBird < bottomYObs2);
+
+    std::cout << "kolizjaGorna=" << kolizjaGorna << " kolizjaDolna=" << kolizjaDolna << endl;
+    if (kolizjaGorna || kolizjaDolna)
+        return true;
+    else
+        return false;
+
+}
+
 
 //********************************************************************************************************************
 //Klasa ObstacleQueue
@@ -146,28 +183,9 @@ ObstacleQueue::ObstacleQueue() :spawnTimer(0.f){}
 
 float& ObstacleQueue::getSpawnTimer() { return spawnTimer; }
 
-deque<Obstacle>& ObstacleQueue::getQueue(){return obstacleQueue;}
+deque<DoubleObstacle>& ObstacleQueue::getQueue(){return obstacleQueue;}
 
 float& ObstacleQueue::getRemoveTimer() { return removeTimer; }
-
-//generator losowych przeszkod
-void ObstacleQueue::addRandomObstacle(int randomValue)
-{
-    sf::Vector2f velocity = {-100.f,0.f};
-    float xPosition = 800;
-
-    float yPosition = 600-(1.5*randomValue);
-    float xSize = 50;
-    float ySize =window_size - yPosition;
-    Obstacle obsBottom(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
-    obstacleQueue.push_back(obsBottom);
-
-    yPosition = 0;
-    xSize = 50;
-    ySize = 300 - (1.5 * randomValue);
-    Obstacle obsUpper(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
-    obstacleQueue.push_back(obsUpper);
-}
 
 
 //co dwie sekund usuwamy wszystkie przeszkoda, ktore wyszly poza lewa krawedz ekranu
@@ -176,7 +194,7 @@ void ObstacleQueue::removeObstacleCondition(float dt)
     removeTimer += dt;
     if (removeTimer > 2)
     {
-        while (obstacleQueue[0].getXPosition() < -50)
+        while (obstacleQueue[0].getdoubleObs()[0].getXPosition() < -50)
             obstacleQueue.pop_front();
         removeTimer = 0;
     }
@@ -191,4 +209,66 @@ void ObstacleQueue::spawnObstacleCondition(float dt, int randomValue)
         addRandomObstacle(randomValue);
         spawnTimer = 0;
     }
+}
+
+//generator losowych przeszkod
+void ObstacleQueue::addRandomObstacle(int randomValue)
+{
+    DoubleObstacle doubleObs;
+
+    sf::Vector2f velocity = {-100.f,0.f};
+    float xPosition = 800;
+
+    //przeszkoda dolna
+    float yPosition = 600-(1.5*randomValue);
+    float xSize = 50;
+    float ySize =window_size - yPosition;
+    Obstacle obsBottom(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
+    doubleObs.getdoubleObs().push_back(obsBottom);
+
+    //przeszkoda gorna
+    yPosition = 0;
+    xSize = 50;
+    ySize = 300 - (1.5 * randomValue);
+    Obstacle obsUpper(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
+    doubleObs.getdoubleObs().push_back(obsUpper);
+
+    obstacleQueue.push_back(std::move(doubleObs));
+
+}
+//funkcja sprawdzajaca pomiedzy, ktorymi dwiema przeszkodami aktualnie znajduje sie ptak
+DoubleObstacle* ObstacleQueue::birdBetweenObstacles(Bird& bird)
+{
+    for (auto& doubleObs : obstacleQueue)
+    {
+        float leftXBird = bird.getBirdShape().getPosition().x - bird.getRadius()+30.f;
+        float rightXBird = bird.getBirdShape().getPosition().x + bird.getRadius()-30.f;
+        float leftXObs = doubleObs.getdoubleObs()[0].getXPosition();
+        float rightXObs = doubleObs.getdoubleObs()[0].getXPosition() + doubleObs.getdoubleObs()[0].getXSize();
+        if (leftXObs < leftXBird && leftXBird < rightXObs || leftXObs < rightXBird && rightXBird < rightXObs)
+            return &doubleObs;
+    }
+    return nullptr;
+}
+//********************************************************************************************************************
+//Klasa Score
+//********************************************************************************************************************
+
+Score::Score() :score(0)
+{
+    scoreText.setString(std::to_string(score));
+    scoreText.setCharacterSize(30);
+    font.loadFromFile("Cabin-SemiBold.ttf");
+    scoreText.setFont(font);
+    scoreText.setFillColor(sf::Color::Cyan);
+    scoreText.setPosition({ 700.f,50.f });
+}
+
+const unsigned int Score::getScore() const { return score; }
+const sf::Text& Score::getText() const { return scoreText; }
+void Score::setScore(unsigned int score) { this->score = score; }
+void Score::incrementScore(float change) 
+{ 
+    score += 60 * change;
+    scoreText.setString(std::to_string(score));
 }

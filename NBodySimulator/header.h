@@ -5,8 +5,11 @@
 #include <SFML/Graphics/Text.hpp>
 #include <iostream>
 #include <vector>
+#include <utility>
 #include <random>
 #include <deque>
+#include <string>
+#include <memory>
 
 using std::cout;
 using std::cerr;
@@ -14,9 +17,11 @@ using std::endl;
 using std::string;
 using std::vector;
 using std::deque;
+using std::unique_ptr;
+using std::pair;
 
 //rozne GameState'y, w ktorych bedzie znajdowac sie gra
-enum class GameState {Starting_menu, Playing, Pause_menu, Ranking_list, Settings, Load_list};
+enum class GameState {Starting_menu, Playing, Pause_menu, Ranking_list, Settings, Load_list, Game_Over};
 
 const int window_size = 800;
 
@@ -79,14 +84,16 @@ public:
 class Bird
 {
 private:
-	sf::RectangleShape birdShape;
+	sf::CircleShape birdShape;
 	sf::Vector2f velocity;
+	float radius;
 	float gravity;
 	float jump;
 public:
 	Bird();
 	void setVelocity(float x, float y);
-	sf::RectangleShape getBirdShape();
+	const float getRadius() const;
+	sf::CircleShape getBirdShape();
 	void birdUpdate(float dt);
 	void inputHandle();
 };
@@ -98,7 +105,7 @@ public:
 //pojedyncza przeszkoda
 class Obstacle
 {
-protected:
+private:
 	sf::RectangleShape obstacle;
 	sf::Vector2f velocity;
 	float yPosition;
@@ -107,12 +114,23 @@ protected:
 	float ySize;
 public:
 	Obstacle(float xPosition, float yPosition, float xSize, float ySize, float velX, float velY);
-	float getXPosition();
+	const float getXPosition() const;
+	const float getYPosition() const;
+	const float getXSize() const;
+	const float getYSize() const;
 	const sf::RectangleShape& getObstacle() const;
 	void updateObstacle(float dt);
 };
 
-
+//podwojna przeszkoda
+class DoubleObstacle
+{
+private:
+	vector<Obstacle> doubleObs;
+public:
+	vector<Obstacle>& getdoubleObs();
+	bool collisionCheck(Bird& bird);
+};
 
 
 
@@ -120,18 +138,34 @@ public:
 class ObstacleQueue
 {
 private:
-	deque<Obstacle> obstacleQueue;
+	deque<DoubleObstacle> obstacleQueue;
 	float spawnTimer;
 	float removeTimer;
+
 public:
 	ObstacleQueue();
 	float& getSpawnTimer();
 	float& getRemoveTimer();
-	deque<Obstacle>& getQueue();
+	deque<DoubleObstacle>& getQueue();
 	void addRandomObstacle(int randomValue);
 	void obstacleRemover();
 	void removeObstacleCondition(float dt);
 	void spawnObstacleCondition(float dt, int randomValue);
+	DoubleObstacle* birdBetweenObstacles(Bird& bird);
 };
 
 
+
+class Score
+{
+private:
+	unsigned int score;
+	sf::Text scoreText;
+	sf::Font font;
+public:
+	Score();
+	const unsigned int getScore() const;
+	const sf::Text& getText() const;
+	void setScore(unsigned int score);
+	void incrementScore(float change);
+};
