@@ -8,8 +8,12 @@
 #include <utility>
 #include <random>
 #include <deque>
+#include <queue>
 #include <string>
 #include <memory>
+#include <fstream>
+#include <sstream>
+#include <algorithm>
 
 using std::cout;
 using std::cerr;
@@ -19,9 +23,12 @@ using std::vector;
 using std::deque;
 using std::unique_ptr;
 using std::pair;
+using std::fstream;
+using std::stringstream;
 
 //rozne GameState'y, w ktorych bedzie znajdowac sie gra
-enum class GameState {Starting_menu, Playing, Pause_menu, Ranking_list, Settings, Load_list, Game_Over};
+enum class GameState {Starting_menu, Playing, Pause_menu, Ranking_list, Settings, Load_list, Game_Over, Username_Input
+};
 
 const int window_size = 800;
 
@@ -48,9 +55,21 @@ public:
 	void setWindow(unsigned int width, unsigned int height);
 };
 
-
-
-
+//klasa obslugujaca nickname aktualnego uzytkownika
+class User
+{
+private:
+	string nickname;
+	sf::Font font1;
+	sf::Text nameText;
+public:
+	User(sf::Font& font);
+	string& getName();
+	sf::Text& getNameText();
+	void setNickname(string& name);
+	void updateNameText();
+	void nameReset();
+};
 
 
 //klasa do tworzenia roznych menu, np menu startowego i menu pause
@@ -66,6 +85,8 @@ private:
 public:
 	//glowny konstruktor menu
 	Menu(string menu_title, int optionsSize, vector<string> labels, sf::Font& font);
+	Menu(string menu_title, int optionsSize, vector<pair<int,string>> labels, sf::Font& font);
+	Menu(string menu_title, sf::Font& font);
 	//gettery i settery
 	const char& getMenuCount() const;
 	const sf::Font& getFont() const;
@@ -74,6 +95,7 @@ public:
 	const sf::Text& getTitle() const;
 	const vector<sf::Text>& getOptions() const;
 	const vector<float>& getSelectorPositions() const;
+	void optionsUpdate(vector <pair<int,string>> list);
 };
 
 
@@ -96,6 +118,7 @@ public:
 	sf::CircleShape getBirdShape();
 	void birdUpdate(float dt);
 	void inputHandle();
+	void resetBird();
 };
 
 
@@ -152,20 +175,37 @@ public:
 	void removeObstacleCondition(float dt);
 	void spawnObstacleCondition(float dt, int randomValue);
 	DoubleObstacle* birdBetweenObstacles(Bird& bird);
+	void resetObstacle();
 };
 
 
 
 class Score
 {
-private:
+protected:
 	unsigned int score;
 	sf::Text scoreText;
 	sf::Font font;
 public:
 	Score();
-	const unsigned int getScore() const;
+	const int getScore() const;
 	const sf::Text& getText() const;
-	void setScore(unsigned int score);
+	void setScore(int score);
 	void incrementScore(float change);
+};
+
+
+
+class RankingList
+{
+private:
+	const short listSize = 100;
+	const string path = "../resources/RankingList/RankingList.txt";
+	vector<pair<int, string>> list;
+
+public:
+	RankingList();
+	vector<pair<int, string>>& getList();
+	void rankingListUpdate(Score& score, User& user);
+	void rankingListSave();
 };
