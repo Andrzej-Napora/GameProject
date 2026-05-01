@@ -108,16 +108,22 @@ private:
 	sf::Texture tex;
 	sf::CircleShape birdShape;
 	sf::Vector2f velocity;
+	float xPosition;
+	float yPosition;
 	float radius;
 	float gravity;
 	float jump;
 	float move;
+	float distans;
 public:
 	Bird();
+	float& getDistans();
+	const float getXPosition() const;
+	const float getYPosition() const;
 	void setVelocity(float x, float y);
 	const float getRadius() const;
 	sf::CircleShape getBirdShape();
-	void birdUpdate(float dt);
+	void birdUpdate(float dt, sf::Vector2f vec);
 	void jumpHandle();
 	void leftMovementHandle();
 	void rightMovementHandle();
@@ -157,7 +163,7 @@ public:
 class Vortex
 {
 private:
-	float current;
+	float force;
 	sf::CircleShape vortex;
 	sf::Texture tex;
 	sf::Vector2f velocity;
@@ -168,4 +174,5 @@ public:
 	Vortex(int randomValue);
 	sf::CircleShape getVortex();
 	void vortexUpdate(float dt,int randomValue);
+	sf::Vector2f gravity(Bird bird);
 };

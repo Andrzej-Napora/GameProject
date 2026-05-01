@@ -189,7 +189,7 @@ int main()
         {
 
             //aktualizujemy predkosc ptaka, w zaleznosci czy zostal wcisniety "jump"
-            bird.birdUpdate(dt);
+            bird.birdUpdate(dt,vortex.gravity(bird));
 
             //obsluga generowania i usuwania przeszkod i wirow
             randomValue = dist(gen);

@@ -183,7 +183,7 @@ const vector<float>& Menu::getSelectorPositions() const { return selectorPositio
 //********************************************************************************************************************
 
 //konstruktor ptaka
-Bird::Bird() : velocity(0.f,0.f), gravity(550.f),jump(-250.f)
+Bird::Bird() : velocity(0.f,0.f), gravity(550.f),jump(-250.f),xPosition(200.f),yPosition(400.f)
 {
     move = 100.f;
     tex.loadFromFile("../resources/textures/bird.png");
@@ -198,17 +198,23 @@ Bird::Bird() : velocity(0.f,0.f), gravity(550.f),jump(-250.f)
 sf::CircleShape Bird::getBirdShape() { return birdShape; }
 const float Bird::getRadius() const { return radius; }
 
+float& Bird::getDistans() { return distans; }
+const float Bird::getXPosition() const { return xPosition; }
+const float Bird::getYPosition() const { return yPosition; }
+
 void Bird::setVelocity(float x, float y)
 {
     velocity.x = x;
     velocity.y = y;
 }
-void Bird::birdUpdate(float dt)
+void Bird::birdUpdate(float dt, sf::Vector2f vec)
 {
     float breaks = 70.f;
 
     velocity.y += gravity * dt;
-    birdShape.move(velocity.x * dt, velocity.y * dt);
+    birdShape.move((velocity.x + vec.x )* dt, (velocity.y+vec.y )* dt);
+    xPosition += (velocity.x + vec.x) * dt;
+    yPosition += (velocity.y + vec.y) * dt;
     if (velocity.x > 0)
     {
         velocity.x -= breaks * dt;
@@ -312,7 +318,7 @@ void RankingList::rankingListSave()
 //klasa Vortex
 //*************************************************************************************************************
 
-Vortex::Vortex(int randomValue):spawnTimer(0),vortex(45.f),xPosition(800.f + 50.f),yPosition(600 + (randomValue))
+Vortex::Vortex(int randomValue):spawnTimer(0),vortex(45.f),xPosition(800.f + 50.f),yPosition(600 + (randomValue)),force(30000)
 {
     tex.loadFromFile("../resources/textures/vortex.png");
     vortex.setTexture(&tex);
@@ -339,4 +345,17 @@ void Vortex::vortexUpdate(float dt, int randomValue)
             vortex.setPosition({ xPosition,yPosition });
         }
     }
+}
+
+sf::Vector2f Vortex::gravity(Bird bird)
+{
+    sf::Vector2f vec;
+    float yDist = vortex.getPosition().y - bird.getYPosition();
+    float xDist = vortex.getPosition().x - bird.getXPosition();
+    float distans = sqrt(pow(xDist, 2) + pow(yDist, 2));
+    if (distans < 30.f) distans = 30.f;
+    float current = force / distans;
+    vec.x = current * xDist / distans;
+    vec.y = current * yDist / distans;
+    return vec;
 }
