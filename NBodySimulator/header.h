@@ -43,7 +43,10 @@ private:
 	sf::RenderWindow window;
 	unsigned int width;
 	unsigned int height;
+	sf::Texture tex;
+	sf::Sprite sprite;
 public:
+	sf::Sprite getSprite();
 	const unsigned int& getWidth() const;
 	const unsigned int& getHight() const;
 	void setWidth(unsigned int width);
@@ -143,7 +146,7 @@ public:
 	const float getYPosition() const;
 	const float getXSize() const;
 	const float getYSize() const;
-	const sf::RectangleShape& getObstacle() const;
+	sf::RectangleShape& getObstacle();
 	void updateObstacle(float dt);
 };
 
@@ -167,7 +170,7 @@ private:
 	deque<DoubleObstacle> obstacleQueue;
 	float spawnTimer;
 	float removeTimer;
-
+	sf::Texture pipe;
 public:
 	ObstacleQueue();
 	float& getSpawnTimer();

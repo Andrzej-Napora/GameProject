@@ -127,11 +127,11 @@ int main()
                 if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter)
                 {
                     //po wprowadzeniu nazwy uzytkownika aktualizujemy liste rankingowa, zapisujemy ja do pliku i aktualizujemy ranking menu
-                    score.setScore(0.f);
-                    user.nameReset();
                     rankingList.rankingListUpdate(score, user);
                     rankingList.rankingListSave();
                     rankingMenu.optionsUpdate(rankingList.getList());
+                    score.setScore(0.f);
+                    user.nameReset();
                     currentGameState = GameState::Starting_menu;
                 }
             }
@@ -215,6 +215,7 @@ int main()
                 }
             }
             //rysujemy
+            gameWindow.getWindow().draw(gameWindow.getSprite());
             for (auto& obstacle : obstacleQueue.getQueue())
             {
                 gameWindow.getWindow().draw(obstacle.getdoubleObs().first.getObstacle());

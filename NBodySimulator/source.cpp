@@ -8,6 +8,9 @@
 //konstruktor domyslny
 GameWindow::GameWindow():width(window_size), height(window_size)
 {
+    tex.loadFromFile("../resources/textures/background.png");
+    sprite.setTexture(tex);
+    sprite.setOrigin(0.f, 0.f);
 	window.create(sf::VideoMode(window_size, window_size), "Flappy birds - Menu");
     window.setFramerateLimit(60);
 }
@@ -28,6 +31,7 @@ const unsigned int& GameWindow::getHight() const { return height; }
 void GameWindow::setWidth(unsigned int width) { this->width = width; }
 void GameWindow::setHight(unsigned int height) { this->height = height; }
 sf::RenderWindow& GameWindow::getWindow() { return window; }
+sf::Sprite GameWindow::getSprite() { return sprite; }
 
 //********************************************************************************************************************
 //Klasa User
@@ -232,7 +236,7 @@ const float Obstacle::getXSize() const { return xSize; }
 const float Obstacle::getYSize() const { return ySize; }
 const float Obstacle::getXPosition() const { return xPosition; }
 const float Obstacle::getYPosition() const { return yPosition; }
-const sf::RectangleShape& Obstacle::getObstacle() const { return obstacle; }
+sf::RectangleShape& Obstacle::getObstacle(){ return obstacle; }
 
 void Obstacle::updateObstacle(float dt)
 {
@@ -295,6 +299,7 @@ void ObstacleQueue::spawnObstacleCondition(float dt, int randomValue)
 void ObstacleQueue::addRandomObstacle(int randomValue)
 {
     DoubleObstacle doubleObs;
+    pipe.loadFromFile("../resources/textures/pipe.png");
 
     sf::Vector2f velocity = {-100.f,0.f};
     float xPosition = 800;
@@ -304,6 +309,7 @@ void ObstacleQueue::addRandomObstacle(int randomValue)
     float xSize = 50;
     float ySize =window_size - yPosition;
     Obstacle obsBottom(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
+    obsBottom.getObstacle().setTexture(&pipe);
     doubleObs.getdoubleObs().second = obsBottom;
 
     //przeszkoda gorna
@@ -311,6 +317,9 @@ void ObstacleQueue::addRandomObstacle(int randomValue)
     xSize = 50;
     ySize = 300 - (1.5 * randomValue);
     Obstacle obsUpper(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
+    obsUpper.getObstacle().setTexture(&pipe);
+    obsUpper.getObstacle().setOrigin(0.f, ySize);
+    obsUpper.getObstacle().setScale(1.f, -1.f);
     doubleObs.getdoubleObs().first = obsUpper;
 
     obstacleQueue.push_back(doubleObs);
