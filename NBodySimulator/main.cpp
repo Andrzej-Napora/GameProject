@@ -1,4 +1,5 @@
 #include "header.h"
+#include "Obstacles.h"
 
 int main()
 {
@@ -24,6 +25,7 @@ int main()
     Bird bird;
     ObstacleQueue obstacleQueue;
     Score score;
+    Vortex vortex(randomValue);
 
 
     rankingMenu.optionsUpdate(rankingList.getList());
@@ -94,10 +96,24 @@ int main()
                 }
             }
             //obluga klawaitury i myszy podczas grania
-            if (currentGameState == GameState::Playing && (event.type == sf::Event::KeyPressed || event.type == sf::Event::MouseButtonPressed))
+            if (currentGameState == GameState::Playing)
             {
-                if(event.key.code == sf::Keyboard::Space || event.key.code == sf::Mouse::Left)
-                    bird.inputHandle();
+                // 1. obługa klawiatury
+                if (event.type == sf::Event::KeyPressed)
+                {
+                    if (event.key.code == sf::Keyboard::Space)
+                        bird.jumpHandle();
+                    else if (event.key.code == sf::Keyboard::A || event.key.code == sf::Keyboard::Left)
+                        bird.leftMovementHandle();
+                    else if (event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right)
+                        bird.rightMovementHandle();
+                }
+                // 2. obsługa myszy
+                else if (event.type == sf::Event::MouseButtonPressed)
+                {
+                    if (event.mouseButton.button == sf::Mouse::Left)
+                        bird.jumpHandle();
+                }
             }
             //wyswietlenie ekranu Game Over
             if (currentGameState == GameState::Game_Over && (event.type == sf::Event::KeyPressed || event.type == sf::Event::MouseButtonPressed))
@@ -175,10 +191,11 @@ int main()
             //aktualizujemy predkosc ptaka, w zaleznosci czy zostal wcisniety "jump"
             bird.birdUpdate(dt);
 
-            //obsluga generowania i usuwania przeszkod
+            //obsluga generowania i usuwania przeszkod i wirow
             randomValue = dist(gen);
             obstacleQueue.spawnObstacleCondition(dt, randomValue);
             obstacleQueue.removeObstacleCondition(dt);
+            vortex.vortexUpdate(dt, randomValue);
 
             //petla aktualizujaca wszystkie przeszkody naraz
             for (auto& obstacle : obstacleQueue.getQueue())
@@ -193,26 +210,26 @@ int main()
             {
                 sf::FloatRect ramkaPrzeszkodyGornej = obstacle.getdoubleObs().first.getObstacle().getGlobalBounds();
                 sf::FloatRect ramkaPrzeszkodyDolnej = obstacle.getdoubleObs().second.getObstacle().getGlobalBounds();
-                if(ramkPtaka.intersects(ramkaPrzeszkodyGornej)|| ramkPtaka.intersects(ramkaPrzeszkodyDolnej))
-                {
+                //if(ramkPtaka.intersects(ramkaPrzeszkodyGornej)|| ramkPtaka.intersects(ramkaPrzeszkodyDolnej))
+                //{
 
-                    //po kolizji resetujemy stan gry, przed kolejnym Play
-                    bird.resetBird();
-                    obstacleQueue.resetObstacleQueue();
+                //    //po kolizji resetujemy stan gry, przed kolejnym Play
+                //    bird.resetBird();
+                //    obstacleQueue.resetObstacleQueue();
 
-                    //jesli podczas kolizji wynik byl wystarczajaco wysoki, zeby dostac sie na liste rankingowa,
-                    //przechodzimy do ekranu wpisywania nazwy uzytkownika; w przeciwnym razie, do ekranu GameOver
-                    if (rankingList.getList().size() < 100 || score.getScore() > rankingList.getList().back().first)
-                    {
-                        currentGameState = GameState::Username_Input;
-                        break;
-                    }
-                    else
-                    {
-                        currentGameState = GameState::Game_Over;
-                        break;
-                    }
-                }
+                //    //jesli podczas kolizji wynik byl wystarczajaco wysoki, zeby dostac sie na liste rankingowa,
+                //    //przechodzimy do ekranu wpisywania nazwy uzytkownika; w przeciwnym razie, do ekranu GameOver
+                //    if (rankingList.getList().size() < 100 || score.getScore() > rankingList.getList().back().first)
+                //    {
+                //        currentGameState = GameState::Username_Input;
+                //        break;
+                //    }
+                //    else
+                //    {
+                //        currentGameState = GameState::Game_Over;
+                //        break;
+                //    }
+                //}
             }
             //rysujemy
             gameWindow.getWindow().draw(gameWindow.getSprite());
@@ -221,6 +238,7 @@ int main()
                 gameWindow.getWindow().draw(obstacle.getdoubleObs().first.getObstacle());
                 gameWindow.getWindow().draw(obstacle.getdoubleObs().second.getObstacle());
             }
+            gameWindow.getWindow().draw(vortex.getVortex());
             gameWindow.getWindow().draw(bird.getBirdShape());
             gameWindow.getWindow().draw(score.getText());
         }

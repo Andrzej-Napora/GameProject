@@ -1,4 +1,5 @@
 #include "header.h"
+#include "Obstacles.h"
 
 
 //********************************************************************************************************************
@@ -181,9 +182,10 @@ const vector<float>& Menu::getSelectorPositions() const { return selectorPositio
 //Klasa Bird
 //********************************************************************************************************************
 
-//konstruktor prostego ptaka
+//konstruktor ptaka
 Bird::Bird() : velocity(0.f,0.f), gravity(550.f),jump(-250.f)
 {
+    move = 100.f;
     tex.loadFromFile("../resources/textures/bird.png");
     birdShape.setTexture(&tex);
     radius = static_cast<float>(tex.getSize().x) / 2.0f;
@@ -203,128 +205,29 @@ void Bird::setVelocity(float x, float y)
 }
 void Bird::birdUpdate(float dt)
 {
+    float breaks = 70.f;
+
     velocity.y += gravity * dt;
     birdShape.move(velocity.x * dt, velocity.y * dt);
+    if (velocity.x > 0)
+    {
+        velocity.x -= breaks * dt;
+    }
+    else if (velocity.x < 0)
+    {
+        velocity.x += breaks * dt;
+    }
 }
 
-void Bird::inputHandle()
-{
-    velocity.y = jump;
-}
+void Bird::jumpHandle(){ velocity.y = jump;}
+void Bird::leftMovementHandle(){ velocity.x = -move;}
+void Bird::rightMovementHandle(){ velocity.x = move;}
 void Bird::resetBird()
 {
     birdShape.setPosition({ 200.f,400.f });
     velocity = { 0.f,0.f };
 }
 
-
-//********************************************************************************************************************
-//Klasa Obstacle
-//********************************************************************************************************************
-
-//konstruktor prostych przeszkod
-Obstacle::Obstacle(float xPosition, float yPosition, float xSize, float ySize, float velX, float velY):
-    xPosition(xPosition), yPosition(yPosition), xSize(xSize), ySize(ySize)
-{
-    velocity = { velX,velY };
-    obstacle.setSize({ xSize,ySize });
-    obstacle.setPosition({ xPosition, yPosition });
-    obstacle.setFillColor(sf::Color::White);
-}
-
-const float Obstacle::getXSize() const { return xSize; }
-const float Obstacle::getYSize() const { return ySize; }
-const float Obstacle::getXPosition() const { return xPosition; }
-const float Obstacle::getYPosition() const { return yPosition; }
-sf::RectangleShape& Obstacle::getObstacle(){ return obstacle; }
-
-void Obstacle::updateObstacle(float dt)
-{
-    //zmienna dt zapewnia, ze ruch obiektu bedzie zalezny od czasu, ktory minal od ostatniego update,
-    //a nie od tego jak szybko dziala komputer   
-    obstacle.move( velocity.x * dt,velocity.y * dt);
-    xPosition += velocity.x * dt;
-    yPosition += velocity.y * dt;
-}
-
-//********************************************************************************************************************
-//Klasa DoubleObstacle
-//********************************************************************************************************************
-
-pair<Obstacle,Obstacle>& DoubleObstacle::getdoubleObs() { return doubleObs; }
-
-
-//********************************************************************************************************************
-//Klasa ObstacleQueue
-//********************************************************************************************************************
-
-ObstacleQueue::ObstacleQueue() :spawnTimer(2.f){}
-
-float& ObstacleQueue::getSpawnTimer() { return spawnTimer; }
-
-deque<DoubleObstacle>& ObstacleQueue::getQueue(){return obstacleQueue;}
-
-float& ObstacleQueue::getRemoveTimer() { return removeTimer; }
-
-void ObstacleQueue::resetObstacleQueue()
-{
-    spawnTimer = 0;
-    obstacleQueue.clear();
-}
-
-//co dwie sekund usuwamy wszystkie przeszkoda, ktore wyszly poza lewa krawedz ekranu
-void ObstacleQueue::removeObstacleCondition(float dt)
-{
-    removeTimer += dt;
-    if (removeTimer > 2)
-    {
-         while (!obstacleQueue.empty() && obstacleQueue.front().getdoubleObs().first.getXPosition() < -50)
-            obstacleQueue.pop_front();
-        removeTimer = 0;
-    }
-}
-
-//co dwie sekundy generujemy nowa przeszkode
-void ObstacleQueue::spawnObstacleCondition(float dt, int randomValue)
-{
-    spawnTimer += dt;
-    if (spawnTimer > 2)
-    {
-        addRandomObstacle(randomValue);
-        spawnTimer = 0;
-    }
-}
-
-//generator losowych przeszkod
-void ObstacleQueue::addRandomObstacle(int randomValue)
-{
-    DoubleObstacle doubleObs;
-    pipe.loadFromFile("../resources/textures/pipe.png");
-
-    sf::Vector2f velocity = {-100.f,0.f};
-    float xPosition = 800;
-
-    //przeszkoda dolna
-    float yPosition = 600-(1.5*randomValue);
-    float xSize = 50;
-    float ySize =window_size - yPosition;
-    Obstacle obsBottom(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
-    obsBottom.getObstacle().setTexture(&pipe);
-    doubleObs.getdoubleObs().second = obsBottom;
-
-    //przeszkoda gorna
-    yPosition = 0;
-    xSize = 50;
-    ySize = 300 - (1.5 * randomValue);
-    Obstacle obsUpper(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
-    obsUpper.getObstacle().setTexture(&pipe);
-    obsUpper.getObstacle().setOrigin(0.f, ySize);
-    obsUpper.getObstacle().setScale(1.f, -1.f);
-    doubleObs.getdoubleObs().first = obsUpper;
-
-    obstacleQueue.push_back(doubleObs);
-
-}
 
 //********************************************************************************************************************
 //Klasa Score
@@ -336,7 +239,7 @@ Score::Score() :score(0)
     scoreText.setCharacterSize(30);
     font.loadFromFile("Cabin-SemiBold.ttf");
     scoreText.setFont(font);
-    scoreText.setFillColor(sf::Color::Cyan);
+    scoreText.setFillColor(sf::Color::Blue);
     scoreText.setPosition({ 700.f,50.f });
 }
 
@@ -403,4 +306,37 @@ void RankingList::rankingListSave()
     else
         cerr << "Nie powiodło sie otwarcie RankingList.txt" << endl;
     file.close();
+}
+
+//**************************************************************************************************************
+//klasa Vortex
+//*************************************************************************************************************
+
+Vortex::Vortex(int randomValue):spawnTimer(0),vortex(45.f),xPosition(800.f + 50.f),yPosition(600 + (randomValue))
+{
+    tex.loadFromFile("../resources/textures/vortex.png");
+    vortex.setTexture(&tex);
+    velocity = { -200.f,0.f };
+    vortex.setPosition({ xPosition, yPosition });
+}
+sf::CircleShape Vortex::getVortex() { return vortex; }
+
+void Vortex::vortexUpdate(float dt, int randomValue)
+{
+    spawnTimer += dt;
+    vortex.move(velocity.x * dt, velocity.y*dt);
+    xPosition += velocity.x * dt;
+    if (spawnTimer > 4.f)
+    {
+        spawnTimer = 0;
+        if (vortex.getPosition().x < -50.f)
+        {
+            if(randomValue>50)
+                yPosition = 520 + 2 * randomValue;
+            else
+                yPosition = 5 + 3 * randomValue;
+            xPosition = 1000.f;
+            vortex.setPosition({ xPosition,yPosition });
+        }
+    }
 }

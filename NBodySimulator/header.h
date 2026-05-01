@@ -32,10 +32,6 @@ enum class GameState {Starting_menu, Playing, Pause_menu, Ranking_list, Settings
 
 const int window_size = 800;
 
-
-
-
-
 //Klasa zarzadzajaca oknem gry
 class GameWindow
 {
@@ -115,76 +111,18 @@ private:
 	float radius;
 	float gravity;
 	float jump;
+	float move;
 public:
 	Bird();
 	void setVelocity(float x, float y);
 	const float getRadius() const;
 	sf::CircleShape getBirdShape();
 	void birdUpdate(float dt);
-	void inputHandle();
+	void jumpHandle();
+	void leftMovementHandle();
+	void rightMovementHandle();
 	void resetBird();
 };
-
-
-
-
-
-//pojedyncza przeszkoda
-class Obstacle
-{
-private:
-	sf::RectangleShape obstacle;
-	sf::Vector2f velocity;
-	float yPosition;
-	float xPosition;
-	float xSize;
-	float ySize;
-public:
-	Obstacle() = default;
-	Obstacle(float xPosition, float yPosition, float xSize, float ySize, float velX, float velY);
-	const float getXPosition() const;
-	const float getYPosition() const;
-	const float getXSize() const;
-	const float getYSize() const;
-	sf::RectangleShape& getObstacle();
-	void updateObstacle(float dt);
-};
-
-//podwojna przeszkoda
-class DoubleObstacle
-{
-private:
-	pair<Obstacle,Obstacle> doubleObs;
-public:
-	DoubleObstacle() = default;
-	pair<Obstacle, Obstacle>& getdoubleObs();
-	//bool collisionCheck(Bird& bird);
-};
-
-
-
-//zestaw przeszkod
-class ObstacleQueue
-{
-private:
-	deque<DoubleObstacle> obstacleQueue;
-	float spawnTimer;
-	float removeTimer;
-	sf::Texture pipe;
-public:
-	ObstacleQueue();
-	float& getSpawnTimer();
-	float& getRemoveTimer();
-	deque<DoubleObstacle>& getQueue();
-	void addRandomObstacle(int randomValue);
-	void obstacleRemover();
-	void removeObstacleCondition(float dt);
-	void spawnObstacleCondition(float dt, int randomValue);
-	DoubleObstacle* birdBetweenObstacles(Bird& bird);
-	void resetObstacleQueue();
-};
-
-
 
 class Score
 {
@@ -214,4 +152,19 @@ public:
 	vector<pair<int, string>>& getList();
 	void rankingListUpdate(Score& score, User& user);
 	void rankingListSave();
+};
+
+class Vortex
+{
+private:
+	sf::CircleShape vortex;
+	sf::Texture tex;
+	sf::Vector2f velocity;
+	float spawnTimer;
+	float xPosition;
+	float yPosition;
+public:
+	Vortex(int randomValue);
+	sf::CircleShape getVortex();
+	void vortexUpdate(float dt,int randomValue);
 };
