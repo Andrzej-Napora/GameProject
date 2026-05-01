@@ -175,4 +175,5 @@ public:
 	sf::CircleShape getVortex();
 	void vortexUpdate(float dt,int randomValue);
 	sf::Vector2f gravity(Bird bird);
+	void reset(int randomValue);
 };

@@ -216,6 +216,7 @@ int main()
                     //po kolizji resetujemy stan gry, przed kolejnym Play
                     bird.resetBird();
                     obstacleQueue.resetObstacleQueue();
+                    vortex.reset(randomValue);
 
                     //jesli podczas kolizji wynik byl wystarczajaco wysoki, zeby dostac sie na liste rankingowa,
                     //przechodzimy do ekranu wpisywania nazwy uzytkownika; w przeciwnym razie, do ekranu GameOver

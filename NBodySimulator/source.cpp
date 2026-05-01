@@ -183,7 +183,7 @@ const vector<float>& Menu::getSelectorPositions() const { return selectorPositio
 //********************************************************************************************************************
 
 //konstruktor ptaka
-Bird::Bird() : velocity(0.f,0.f), gravity(550.f),jump(-250.f),xPosition(200.f),yPosition(400.f)
+Bird::Bird() : velocity(0.f,0.f), gravity(550.f),jump(-200.f),xPosition(200.f),yPosition(400.f)
 {
     move = 100.f;
     tex.loadFromFile("../resources/textures/bird.png");
@@ -318,7 +318,7 @@ void RankingList::rankingListSave()
 //klasa Vortex
 //*************************************************************************************************************
 
-Vortex::Vortex(int randomValue):spawnTimer(0),vortex(45.f),xPosition(800.f + 50.f),yPosition(600 + (randomValue)),force(30000)
+Vortex::Vortex(int randomValue):spawnTimer(0),vortex(90.f),xPosition(800.f + 50.f),yPosition(600 + (randomValue)),force(18000)
 {
     tex.loadFromFile("../resources/textures/vortex.png");
     vortex.setTexture(&tex);
@@ -338,9 +338,9 @@ void Vortex::vortexUpdate(float dt, int randomValue)
         if (vortex.getPosition().x < -50.f)
         {
             if(randomValue>50)
-                yPosition = 520 + 2 * randomValue;
+                yPosition = 400 + 2 * randomValue;
             else
-                yPosition = 5 + 3 * randomValue;
+                yPosition = 100 + 3 * randomValue;
             xPosition = 1000.f;
             vortex.setPosition({ xPosition,yPosition });
         }
@@ -353,9 +353,13 @@ sf::Vector2f Vortex::gravity(Bird bird)
     float yDist = vortex.getPosition().y - bird.getYPosition();
     float xDist = vortex.getPosition().x - bird.getXPosition();
     float distans = sqrt(pow(xDist, 2) + pow(yDist, 2));
-    if (distans < 30.f) distans = 30.f;
+    if (distans < 80.f) distans = 80.f;
     float current = force / distans;
     vec.x = current * xDist / distans;
     vec.y = current * yDist / distans;
     return vec;
+}
+void Vortex::reset(int randomValue)
+{
+    vortex.setPosition({ 800.f + 50.f ,600 });
 }
