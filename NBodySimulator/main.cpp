@@ -210,26 +210,26 @@ int main()
             {
                 sf::FloatRect ramkaPrzeszkodyGornej = obstacle.getdoubleObs().first.getObstacle().getGlobalBounds();
                 sf::FloatRect ramkaPrzeszkodyDolnej = obstacle.getdoubleObs().second.getObstacle().getGlobalBounds();
-                //if(ramkPtaka.intersects(ramkaPrzeszkodyGornej)|| ramkPtaka.intersects(ramkaPrzeszkodyDolnej))
-                //{
+                if(ramkPtaka.intersects(ramkaPrzeszkodyGornej)|| ramkPtaka.intersects(ramkaPrzeszkodyDolnej))
+                {
 
-                //    //po kolizji resetujemy stan gry, przed kolejnym Play
-                //    bird.resetBird();
-                //    obstacleQueue.resetObstacleQueue();
+                    //po kolizji resetujemy stan gry, przed kolejnym Play
+                    bird.resetBird();
+                    obstacleQueue.resetObstacleQueue();
 
-                //    //jesli podczas kolizji wynik byl wystarczajaco wysoki, zeby dostac sie na liste rankingowa,
-                //    //przechodzimy do ekranu wpisywania nazwy uzytkownika; w przeciwnym razie, do ekranu GameOver
-                //    if (rankingList.getList().size() < 100 || score.getScore() > rankingList.getList().back().first)
-                //    {
-                //        currentGameState = GameState::Username_Input;
-                //        break;
-                //    }
-                //    else
-                //    {
-                //        currentGameState = GameState::Game_Over;
-                //        break;
-                //    }
-                //}
+                    //jesli podczas kolizji wynik byl wystarczajaco wysoki, zeby dostac sie na liste rankingowa,
+                    //przechodzimy do ekranu wpisywania nazwy uzytkownika; w przeciwnym razie, do ekranu GameOver
+                    if (rankingList.getList().size() < 100 || score.getScore() > rankingList.getList().back().first)
+                    {
+                        currentGameState = GameState::Username_Input;
+                        break;
+                    }
+                    else
+                    {
+                        currentGameState = GameState::Game_Over;
+                        break;
+                    }
+                }
             }
             //rysujemy
             gameWindow.getWindow().draw(gameWindow.getSprite());

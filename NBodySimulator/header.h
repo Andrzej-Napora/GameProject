@@ -157,6 +157,7 @@ public:
 class Vortex
 {
 private:
+	float current;
 	sf::CircleShape vortex;
 	sf::Texture tex;
 	sf::Vector2f velocity;
