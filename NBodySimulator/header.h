@@ -106,6 +106,7 @@ public:
 class Bird
 {
 private:
+	sf::Texture tex;
 	sf::CircleShape birdShape;
 	sf::Vector2f velocity;
 	float radius;
@@ -136,6 +137,7 @@ private:
 	float xSize;
 	float ySize;
 public:
+	Obstacle() = default;
 	Obstacle(float xPosition, float yPosition, float xSize, float ySize, float velX, float velY);
 	const float getXPosition() const;
 	const float getYPosition() const;
@@ -149,10 +151,11 @@ public:
 class DoubleObstacle
 {
 private:
-	vector<Obstacle> doubleObs;
+	pair<Obstacle,Obstacle> doubleObs;
 public:
-	vector<Obstacle>& getdoubleObs();
-	bool collisionCheck(Bird& bird);
+	DoubleObstacle() = default;
+	pair<Obstacle, Obstacle>& getdoubleObs();
+	//bool collisionCheck(Bird& bird);
 };
 
 
@@ -175,7 +178,7 @@ public:
 	void removeObstacleCondition(float dt);
 	void spawnObstacleCondition(float dt, int randomValue);
 	DoubleObstacle* birdBetweenObstacles(Bird& bird);
-	void resetObstacle();
+	void resetObstacleQueue();
 };
 
 

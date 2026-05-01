@@ -108,7 +108,7 @@ Menu::Menu(string menu_title, int optionsSize, vector<pair<int,string>> labels, 
     //ustawienia tytulu menu
     title.setFont(font);
     title.setString(menu_title);
-    title.setCharacterSize(30);
+    title.setCharacterSize(50);
     sf::FloatRect titleFrame = title.getLocalBounds();
     title.setOrigin(titleFrame.left + titleFrame.width / 2.f, titleFrame.top + titleFrame.height / 2.f);
     title.setPosition({ 400.f,50.f });
@@ -118,12 +118,11 @@ Menu::Menu(string menu_title, int optionsSize, vector<pair<int,string>> labels, 
     {
         string line;
         line = std::to_string(labels[i].first) + " " + labels[i].second;
-        sf::Text text(line, font, 20);
+        sf::Text text(line, font, 35);
         sf::FloatRect Frame = text.getLocalBounds();
         text.setOrigin(Frame.left + Frame.width / 2.f, Frame.top + Frame.height / 2.f);
-        text.setPosition({ 400.f,(startingPosition + (30 * i)) });
+        text.setPosition({ 400.f,(startingPosition + (40 * i)) });
         options.push_back(text);
-        selectorPositions.push_back(startingPosition + (30 * i));
     }
 
     menuCount = options.size();
@@ -151,12 +150,12 @@ void Menu::optionsUpdate(vector <pair<int, string>> list)
     {
         string line;
         line = std::to_string(list[i].first) + " " + list[i].second;
-        sf::Text text(line, font, 20);
+        sf::Text text(line, font, 35);
         sf::FloatRect Frame = text.getLocalBounds();
         text.setOrigin(Frame.left + Frame.width / 2.f, Frame.top + Frame.height / 2.f);
-        text.setPosition({ 400.f,(startingPosition + (30 * i)) });
+        text.setPosition({ 400.f,(startingPosition + (40 * i)) });
         options.push_back(text);
-        selectorPositions.push_back(startingPosition + (30 * i));
+        selectorPositions.push_back(startingPosition + (40 * i));
     }
 
     menuCount = options.size();
@@ -179,9 +178,12 @@ const vector<float>& Menu::getSelectorPositions() const { return selectorPositio
 //********************************************************************************************************************
 
 //konstruktor prostego ptaka
-Bird::Bird() : birdShape(45.f), velocity(0.f,0.f), gravity(550.f),jump(-250.f)
+Bird::Bird() : velocity(0.f,0.f), gravity(550.f),jump(-250.f)
 {
-    radius = 45.f;
+    tex.loadFromFile("../resources/textures/bird.png");
+    birdShape.setTexture(&tex);
+    radius = static_cast<float>(tex.getSize().x) / 2.0f;
+    birdShape.setRadius(45.f);
     birdShape.setFillColor(sf::Color::Yellow);
     birdShape.setOutlineColor(sf::Color::White);
     birdShape.setOrigin({20.f,20.f});
@@ -208,7 +210,7 @@ void Bird::inputHandle()
 void Bird::resetBird()
 {
     birdShape.setPosition({ 200.f,400.f });
-    velocity = { 0,0 };
+    velocity = { 0.f,0.f };
 }
 
 
@@ -245,44 +247,14 @@ void Obstacle::updateObstacle(float dt)
 //Klasa DoubleObstacle
 //********************************************************************************************************************
 
-vector<Obstacle>& DoubleObstacle::getdoubleObs() { return doubleObs; }
-
-//funkcja sprawdzajaca, czy ptak dotknal ktoras z przeszkod
-bool DoubleObstacle::collisionCheck(Bird& bird)
-{
-    float upperYBird = bird.getBirdShape().getPosition().y - bird.getRadius()+20;
-    float bottomYBird = bird.getBirdShape().getPosition().y + bird.getRadius()-20;
-    float upperYObs = doubleObs[1].getYPosition();
-    float bottomYObs = doubleObs[1].getYPosition() + doubleObs[1].getYSize();
-
-    float upperYObs2 = doubleObs[0].getYPosition();
-    float bottomYObs2 = doubleObs[0].getYPosition() + doubleObs[0].getYSize();
-
-    std::cout << " collisionCheck "<<endl;
-    std::cout << "Ptak:          top=" << upperYBird << " bottom=" << bottomYBird << endl;
-    std::cout << "Obs[1] gorna:  top=" << upperYObs << " bottom=" << bottomYObs << endl;
-    std::cout << "Obs[0] dolna:  top=" << upperYObs2 << " bottom=" << bottomYObs2 << endl;
-
-    bool kolizjaGorna = (upperYObs < upperYBird && upperYBird < bottomYObs)
-        || (upperYObs < bottomYBird && bottomYBird < bottomYObs);
-
-    bool kolizjaDolna = (upperYObs2 < upperYBird && upperYBird < bottomYObs2)
-        || (upperYObs2 < bottomYBird && bottomYBird < bottomYObs2);
-
-    std::cout << "kolizjaGorna=" << kolizjaGorna << " kolizjaDolna=" << kolizjaDolna << endl;
-    if (kolizjaGorna || kolizjaDolna)
-        return true;
-    else
-        return false;
-
-}
+pair<Obstacle,Obstacle>& DoubleObstacle::getdoubleObs() { return doubleObs; }
 
 
 //********************************************************************************************************************
 //Klasa ObstacleQueue
 //********************************************************************************************************************
 
-ObstacleQueue::ObstacleQueue() :spawnTimer(0.f){}
+ObstacleQueue::ObstacleQueue() :spawnTimer(2.f){}
 
 float& ObstacleQueue::getSpawnTimer() { return spawnTimer; }
 
@@ -290,7 +262,7 @@ deque<DoubleObstacle>& ObstacleQueue::getQueue(){return obstacleQueue;}
 
 float& ObstacleQueue::getRemoveTimer() { return removeTimer; }
 
-void ObstacleQueue::resetObstacle()
+void ObstacleQueue::resetObstacleQueue()
 {
     spawnTimer = 0;
     obstacleQueue.clear();
@@ -300,9 +272,9 @@ void ObstacleQueue::resetObstacle()
 void ObstacleQueue::removeObstacleCondition(float dt)
 {
     removeTimer += dt;
-    if (removeTimer > 2 && !obstacleQueue.empty())
+    if (removeTimer > 2)
     {
-        while (obstacleQueue[0].getdoubleObs()[0].getXPosition() < -50)
+         while (!obstacleQueue.empty() && obstacleQueue.front().getdoubleObs().first.getXPosition() < -50)
             obstacleQueue.pop_front();
         removeTimer = 0;
     }
@@ -332,32 +304,19 @@ void ObstacleQueue::addRandomObstacle(int randomValue)
     float xSize = 50;
     float ySize =window_size - yPosition;
     Obstacle obsBottom(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
-    doubleObs.getdoubleObs().push_back(obsBottom);
+    doubleObs.getdoubleObs().second = obsBottom;
 
     //przeszkoda gorna
     yPosition = 0;
     xSize = 50;
     ySize = 300 - (1.5 * randomValue);
     Obstacle obsUpper(xPosition, yPosition, xSize, ySize, velocity.x, velocity.y);
-    doubleObs.getdoubleObs().push_back(obsUpper);
+    doubleObs.getdoubleObs().first = obsUpper;
 
-    obstacleQueue.push_back(std::move(doubleObs));
+    obstacleQueue.push_back(doubleObs);
 
 }
-//funkcja sprawdzajaca pomiedzy, ktorymi dwiema przeszkodami aktualnie znajduje sie ptak
-DoubleObstacle* ObstacleQueue::birdBetweenObstacles(Bird& bird)
-{
-    for (auto& doubleObs : obstacleQueue)
-    {
-        float leftXBird = bird.getBirdShape().getPosition().x - bird.getRadius()+20;
-        float rightXBird = bird.getBirdShape().getPosition().x + bird.getRadius()-20;
-        float leftXObs = doubleObs.getdoubleObs()[0].getXPosition();
-        float rightXObs = doubleObs.getdoubleObs()[0].getXPosition() + doubleObs.getdoubleObs()[0].getXSize();
-        if (leftXObs < leftXBird && leftXBird < rightXObs || leftXObs < rightXBird && rightXBird < rightXObs)
-            return &doubleObs;
-    }
-    return nullptr;
-}
+
 //********************************************************************************************************************
 //Klasa Score
 //********************************************************************************************************************
@@ -384,6 +343,7 @@ void Score::incrementScore(float change)
 //********************************************************************************************************************
 //Klasa RankingList
 //********************************************************************************************************************
+
 //konstruktor listy rankingowej wczytuje dane z pliku .txt do vectora list
 RankingList::RankingList()
 {

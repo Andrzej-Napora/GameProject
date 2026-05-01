@@ -17,13 +17,14 @@ int main()
     GameWindow gameWindow;
     User user(font1);
     RankingList rankingList;
-    Menu startingMenu("FLAPPY BIRDS", 5, {"Play","Load game","Ranking list","Settings","Exit"}, font1);
+    Menu startingMenu("FLAPPY BIRDS", 4, {"Play","Ranking list","Settings","Exit"}, font1);
     Menu gameOver("Game Over",font1);
     Menu rankingMenu("Ranking Menu", rankingList.getList().size(), rankingList.getList(), font1);
     GameState currentGameState = GameState::Starting_menu;
     Bird bird;
     ObstacleQueue obstacleQueue;
     Score score;
+
 
     rankingMenu.optionsUpdate(rankingList.getList());
 
@@ -59,18 +60,14 @@ int main()
                         currentGameState = GameState::Playing;
                         break;
                     case 1:
-                        currentGameState = GameState::Load_list;
-                        break;
-                    case 2:
                         currentGameState = GameState::Ranking_list;
                         break;
-                    case 3:
+                    case 2:
                         currentGameState = GameState::Settings;
                         break;
-                    case 4:
+                    case 3:
                         return 0;
                     }
-
                 }
 
                 //obsluga selectedIndex, wskazuje na opcje, na ktorej graficznie znajduej sie selector
@@ -129,10 +126,10 @@ int main()
                 }
                 if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter)
                 {
-                    //po wprowadzeniu pozycji do rankingu resetujemy stan gry, przed kolejnym Play
-                    rankingList.rankingListUpdate(score,user);
+                    //po wprowadzeniu nazwy uzytkownika aktualizujemy liste rankingowa, zapisujemy ja do pliku i aktualizujemy ranking menu
                     score.setScore(0.f);
                     user.nameReset();
+                    rankingList.rankingListUpdate(score, user);
                     rankingList.rankingListSave();
                     rankingMenu.optionsUpdate(rankingList.getList());
                     currentGameState = GameState::Starting_menu;
@@ -171,7 +168,7 @@ int main()
             gameWindow.getWindow().draw(text);
             gameWindow.getWindow().draw(user.getNameText());
         }
-        //rysujemy GameState Playing
+        //obsluga GameState Playing
         else if (currentGameState == GameState::Playing)
         {
 
@@ -186,37 +183,42 @@ int main()
             //petla aktualizujaca wszystkie przeszkody naraz
             for (auto& obstacle : obstacleQueue.getQueue())
             {
-                obstacle.getdoubleObs()[0].updateObstacle(dt);
-                obstacle.getdoubleObs()[1].updateObstacle(dt);
+                obstacle.getdoubleObs().first.updateObstacle(dt);
+                obstacle.getdoubleObs().second.updateObstacle(dt);
             }
             score.incrementScore(dt);
-
             //sprawdzamy kolizje
-            DoubleObstacle* obsWsk = obstacleQueue.birdBetweenObstacles(bird);
-            if (obsWsk != nullptr)
+            sf::FloatRect ramkPtaka = bird.getBirdShape().getGlobalBounds();
+            for (auto& obstacle : obstacleQueue.getQueue())
             {
-                if (obsWsk->collisionCheck(bird))
+                sf::FloatRect ramkaPrzeszkodyGornej = obstacle.getdoubleObs().first.getObstacle().getGlobalBounds();
+                sf::FloatRect ramkaPrzeszkodyDolnej = obstacle.getdoubleObs().second.getObstacle().getGlobalBounds();
+                if(ramkPtaka.intersects(ramkaPrzeszkodyGornej)|| ramkPtaka.intersects(ramkaPrzeszkodyDolnej))
                 {
+
+                    //po kolizji resetujemy stan gry, przed kolejnym Play
                     bird.resetBird();
-                    obstacleQueue.resetObstacle();
+                    obstacleQueue.resetObstacleQueue();
+
                     //jesli podczas kolizji wynik byl wystarczajaco wysoki, zeby dostac sie na liste rankingowa,
                     //przechodzimy do ekranu wpisywania nazwy uzytkownika; w przeciwnym razie, do ekranu GameOver
                     if (rankingList.getList().size() < 100 || score.getScore() > rankingList.getList().back().first)
                     {
                         currentGameState = GameState::Username_Input;
+                        break;
                     }
                     else
                     {
                         currentGameState = GameState::Game_Over;
+                        break;
                     }
                 }
-
             }
             //rysujemy
             for (auto& obstacle : obstacleQueue.getQueue())
             {
-                gameWindow.getWindow().draw(obstacle.getdoubleObs()[0].getObstacle());
-                gameWindow.getWindow().draw(obstacle.getdoubleObs()[1].getObstacle());
+                gameWindow.getWindow().draw(obstacle.getdoubleObs().first.getObstacle());
+                gameWindow.getWindow().draw(obstacle.getdoubleObs().second.getObstacle());
             }
             gameWindow.getWindow().draw(bird.getBirdShape());
             gameWindow.getWindow().draw(score.getText());
