@@ -18,7 +18,7 @@ int main()
     GameWindow gameWindow;
     User user(font1);
     RankingList rankingList;
-    Menu startingMenu("FLAPPY BIRDS", 4, {"Play","Ranking list","Settings","Exit"}, font1);
+    Menu startingMenu("FLAPPY BIRDS", 3, {"Play","Ranking list","Exit"}, font1);
     Menu gameOver("Game Over",font1);
     Menu rankingMenu("Ranking Menu", rankingList.getList().size(), rankingList.getList(), font1);
     GameState currentGameState = GameState::Starting_menu;
@@ -65,9 +65,6 @@ int main()
                         currentGameState = GameState::Ranking_list;
                         break;
                     case 2:
-                        currentGameState = GameState::Settings;
-                        break;
-                    case 3:
                         return 0;
                     }
                 }

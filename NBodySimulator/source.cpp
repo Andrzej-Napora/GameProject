@@ -183,7 +183,7 @@ const vector<float>& Menu::getSelectorPositions() const { return selectorPositio
 //********************************************************************************************************************
 
 //konstruktor ptaka
-Bird::Bird() : velocity(0.f,0.f), gravity(550.f),jump(-200.f),xPosition(200.f),yPosition(400.f)
+Bird::Bird() : velocity(0.f,0.f), gravity(550.f),jump(-300.f),xPosition(200.f),yPosition(400.f)
 {
     move = 100.f;
     tex.loadFromFile("../resources/textures/bird.png");
