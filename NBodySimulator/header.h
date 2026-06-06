@@ -81,6 +81,20 @@ private:
 	sf::Text title;
 	vector<sf::Text> options;	//vector przechowujacy informacje o poszczegolnych skladowych menu, np ranking_list,settings itd.
 	vector<float> selectorPositions;	//vector przechowujacy pozycje, na ktore ma przemieszczac sie selector
+	float scrollOffset = 0.f;
+	float maxScroll = 0.f;
+	float const startingPosition = 100.f;
+	float const itemHeight = 40.f;
+	float const visibleHeight = 450.f;
+
+	sf::Texture backgroundTexture;
+	sf::Sprite backgroundSprite;
+	bool hasBackground = false;
+
+	// Kolory dla menu
+	sf::Color const activeColor = sf::Color(255, 204, 0);     // Złoty dla wybranej opcji
+	sf::Color const inactiveColor = sf::Color(180, 180, 180); // Szary dla nieaktywnych opcji
+	sf::Color const outlineColor = sf::Color(0, 0, 0, 200);   // Ciemny obrys tekstu
 public:
 	//glowny konstruktor menu
 	Menu(string menu_title, int optionsSize, vector<string> labels, sf::Font& font);
@@ -95,10 +109,12 @@ public:
 	const vector<sf::Text>& getOptions() const;
 	const vector<float>& getSelectorPositions() const;
 	void optionsUpdate(vector <pair<int,string>> list);
+
+	void updateSelection(int selectedIndex);
+	void drawBackground(sf::RenderWindow& window, int selectedIndex);
+	void scroll(float delta);
+	void draw(sf::RenderWindow& window);
 };
-
-
-
 
 
 //klasa zarzadzajaca ptakiem

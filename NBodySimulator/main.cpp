@@ -85,11 +85,29 @@ int main()
 
             }
             //z ranking menu wychodzi sie naciskajac Escape
-            if (currentGameState == GameState::Ranking_list && event.type == sf::Event::KeyPressed)
+            if (currentGameState == GameState::Ranking_list)
             {
-                if (event.key.code == sf::Keyboard::Escape)
+                if (event.type == sf::Event::KeyPressed)
                 {
-                    currentGameState = GameState::Starting_menu;
+                    if (event.key.code == sf::Keyboard::Escape)
+                    {
+                        currentGameState = GameState::Starting_menu;
+                    }
+                    else if (event.key.code == sf::Keyboard::Up)
+                    {
+                        rankingMenu.scroll(1.f); // Przewijanie w górę
+                    }
+                    else if (event.key.code == sf::Keyboard::Down)
+                    {
+                        rankingMenu.scroll(-1.f); // Przewijanie w dół
+                    }
+                }
+                else if (event.type == sf::Event::MouseWheelScrolled)
+                {
+                    if (event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel)
+                    {
+                        rankingMenu.scroll(event.mouseWheelScroll.delta);
+                    }
                 }
             }
             //obluga klawaitury i myszy podczas grania
@@ -160,6 +178,7 @@ int main()
             //ustawiamy selector na selectedIndex wektora selectorPositions
             startingMenu.getSelectorMod().setPosition(400.f, startingMenu.getSelectorPositions()[selectedIndex]);
 
+            startingMenu.drawBackground(gameWindow.getWindow(), selectedIndex);
             gameWindow.getWindow().draw(startingMenu.getSelector());
             gameWindow.getWindow().draw(startingMenu.getTitle());
             for (auto text : startingMenu.getOptions())

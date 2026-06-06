@@ -104,29 +104,49 @@ Menu::Menu(string menu_title, int optionsSize, vector<string> labels, sf::Font& 
     menuCount = options.size();
 }
 //konstruktro dla ranking menu
-Menu::Menu(string menu_title, int optionsSize, vector<pair<int,string>> labels, sf::Font& font_arg)
+Menu::Menu(string menu_title, int optionsSize, vector<pair<int, string>> labels, sf::Font& font_arg)
 {
-    float const startingPosition = 100.f;
-
     font = font_arg;
 
-    //ustawienia tytulu menu
+    // Próba załadowania tła z pliku (zostawiamy miejsce na Twoją teksturę)
+    if (backgroundTexture.loadFromFile("assets/menu_bg.png"))
+    {
+        backgroundSprite.setTexture(backgroundTexture);
+        hasBackground = true;
+
+        // Opcjonalnie skalujemy tło do rozmiaru okna, np. 800x600:
+        // backgroundSprite.setScale(800.f / backgroundTexture.getSize().x, 600.f / backgroundTexture.getSize().y);
+    }
+
+    // Stylowanie tytułu menu
     title.setFont(font);
     title.setString(menu_title);
-    title.setCharacterSize(50);
+    title.setCharacterSize(55);
+    title.setFillColor(activeColor);
+    title.setOutlineColor(sf::Color::Black);
+    title.setOutlineThickness(3.f); // Grubszy obrys dla lepszej czytelności
+
     sf::FloatRect titleFrame = title.getLocalBounds();
     title.setOrigin(titleFrame.left + titleFrame.width / 2.f, titleFrame.top + titleFrame.height / 2.f);
-    title.setPosition({ 400.f,50.f });
+    title.setPosition({ 400.f, 80.f }); // Obniżone lekko w dół
 
-    //petla dodajaca do vectora options kolejne pozycje w rankingu
-    for (int i = 0; i < optionsSize;i++)
+    float const startingPosition = 250.f; // Menu przesunięte niżej dla lepszego balansu
+    float const itemHeight = 60.f;
+
+    for (int i = 0; i < optionsSize; i++)
     {
-        string line;
-        line = std::to_string(labels[i].first) + " " + labels[i].second;
+        string line = labels[i].second; // Dla menu głównego bierzemy tylko sam napis opcji
         sf::Text text(line, font, 35);
+
+        // Domyślny styl dla nieaktywnego elementu
+        text.setFillColor(inactiveColor);
+        text.setOutlineColor(outlineColor);
+        text.setOutlineThickness(2.f);
+
         sf::FloatRect Frame = text.getLocalBounds();
         text.setOrigin(Frame.left + Frame.width / 2.f, Frame.top + Frame.height / 2.f);
-        text.setPosition({ 400.f,(startingPosition + (40 * i)) });
+        text.setPosition({ 400.f, (startingPosition + (itemHeight * i)) });
+
         options.push_back(text);
     }
 
@@ -164,6 +184,83 @@ void Menu::optionsUpdate(vector <pair<int, string>> list)
     }
 
     menuCount = options.size();
+}
+
+void Menu::updateSelection(int selectedIndex)
+{
+    for (int i = 0; i < options.size(); ++i)
+    {
+        if (i == selectedIndex)
+        {
+            options[i].setFillColor(activeColor);
+            options[i].setCharacterSize(40); // Powiększenie wybranej opcji
+        }
+        else
+        {
+            options[i].setFillColor(inactiveColor);
+            options[i].setCharacterSize(35); // Standardowy rozmiar
+        }
+
+        // Ponowne wycentrowanie origin po zmianie rozmiaru fontu
+        sf::FloatRect frame = options[i].getLocalBounds();
+        options[i].setOrigin(frame.left + frame.width / 2.f, frame.top + frame.height / 2.f);
+    }
+}
+
+void Menu::drawBackground(sf::RenderWindow& window, int selectedIndex)
+{
+    if (hasBackground)
+    {
+        window.draw(backgroundSprite);
+    }
+    else
+    {
+        // Alternatywne tło jednolite, gdy nie ma pliku graficznego
+        window.clear(sf::Color(25, 25, 35));
+    }
+
+    // Aktualizacja kolorów opcji przed narysowaniem
+    updateSelection(selectedIndex);
+
+    window.draw(title);
+    for (const auto& option : options)
+    {
+        window.draw(option);
+    }
+}
+
+void Menu::scroll(float delta)
+{
+    float scrollSpeed = 20.f; // Prędkość przewijania
+    float newOffset = scrollOffset - (delta * scrollSpeed);
+
+    // Ograniczenie przewijania do granic listy
+    if (newOffset < 0.f) newOffset = 0.f;
+    if (newOffset > maxScroll) newOffset = maxScroll;
+
+    float difference = newOffset - scrollOffset;
+    scrollOffset = newOffset;
+
+    // Przesunięcie wszystkich elementów o obliczoną różnicę
+    for (auto& text : options)
+    {
+        text.move({ 0.f, -difference });
+    }
+}
+
+void Menu::draw(sf::RenderWindow& window)
+{
+    window.draw(title);
+
+    for (const auto& text : options)
+    {
+        float y = text.getPosition().y;
+        // Rysuj tylko, jeśli element znajduje się wewnątrz zdefiniowanego obszaru
+        if (y >= startingPosition - 10.f && y <= startingPosition + visibleHeight)
+        {
+            window.draw(text);
+        }
+    }
 }
 
 //gettery
