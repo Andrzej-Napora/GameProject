@@ -65,125 +65,182 @@ void User::updateNameText()
 }
 void User::nameReset(){ nickname = ""; }
 
-//********************************************************************************************************************
-//Klasa Menu
-//********************************************************************************************************************
-
-//konstruktor dla starting menu
+// 1. Konstruktor dla starting menu (Menu Główne)
 Menu::Menu(string menu_title, int optionsSize, vector<string> labels, sf::Font& font_arg)
 {
-    float const startingPosition = 250.f;   //pozycja w ktorej startuje selector i pierwsza opcja wyboru
+    float const startingPositionMain = 250.f;
 
     font = font_arg;
 
-    //ustawienia selectora
-    selector.setSize({ 500.f,60.f });
-    selector.setFillColor(sf::Color(255, 255, 255, 100));
-    selector.setOrigin(250.f, 30.f);
-
-    //ustawienia tytulu menu
-    title.setFont(font);
-    title.setString(menu_title);
-    title.setCharacterSize(50);
-    sf::FloatRect titleFrame = title.getLocalBounds();
-    title.setOrigin(titleFrame.left + titleFrame.width / 2.f, titleFrame.top + titleFrame.height / 2.f);
-    title.setPosition({ 400.f,50.f });
-
-    //petla dodajaca do vectora options rozne skladowe menu, np. load_game, ranking_list itd.,
-    //dodatkowo uzupelniany jest tu vector selectorPositions
-    for (int i = 0; i < optionsSize;i++)
-    {
-        sf::Text text(labels[i], font, 50);
-        sf::FloatRect Frame = text.getLocalBounds();
-        text.setOrigin(Frame.left + Frame.width / 2.f, Frame.top + Frame.height / 2.f);
-        text.setPosition({ 400.f,(startingPosition+(100*i))});
-        options.push_back(text);
-        selectorPositions.push_back(startingPosition + (100 * i));
-    }
-
-    menuCount = options.size();
-}
-//konstruktro dla ranking menu
-Menu::Menu(string menu_title, int optionsSize, vector<pair<int, string>> labels, sf::Font& font_arg)
-{
-    font = font_arg;
-
-    // Próba załadowania tła z pliku (zostawiamy miejsce na Twoją teksturę)
-    if (backgroundTexture.loadFromFile("assets/menu_bg.png"))
+    // Próba załadowania tła dla menu startowego
+    if (backgroundTexture.loadFromFile("../resources/textures/menu_bg.png"))
     {
         backgroundSprite.setTexture(backgroundTexture);
         hasBackground = true;
 
-        // Opcjonalnie skalujemy tło do rozmiaru okna, np. 800x600:
-        // backgroundSprite.setScale(800.f / backgroundTexture.getSize().x, 600.f / backgroundTexture.getSize().y);
+        // Pobieramy oryginalny rozmiar wczytanej tekstury
+        sf::Vector2u textureSize = backgroundTexture.getSize();
+
+        // Określamy docelowy rozmiar okna
+        float targetWidth = 800.f;
+        float targetHeight = 800.f;
+
+        // Obliczamy współczynnik skali
+        float scaleX = targetWidth / textureSize.x;
+        float scaleY = targetHeight / textureSize.y;
+
+        // Nakładamy skalę na sprite
+        backgroundSprite.setScale(scaleX, scaleY);
     }
 
-    // Stylowanie tytułu menu
+    // Ustawienia selectora
+    selector.setSize({ 500.f, 60.f });
+    selector.setFillColor(sf::Color(255, 255, 255, 100));
+    selector.setOrigin(250.f, 30.f);
+
+    // Ustawienia tytułu menu
     title.setFont(font);
     title.setString(menu_title);
-    title.setCharacterSize(55);
+    title.setCharacterSize(50);
     title.setFillColor(activeColor);
     title.setOutlineColor(sf::Color::Black);
-    title.setOutlineThickness(3.f); // Grubszy obrys dla lepszej czytelności
+    title.setOutlineThickness(3.f);
 
     sf::FloatRect titleFrame = title.getLocalBounds();
     title.setOrigin(titleFrame.left + titleFrame.width / 2.f, titleFrame.top + titleFrame.height / 2.f);
-    title.setPosition({ 400.f, 80.f }); // Obniżone lekko w dół
-
-    float const startingPosition = 250.f; // Menu przesunięte niżej dla lepszego balansu
-    float const itemHeight = 60.f;
+    title.setPosition({ 400.f, 50.f });
 
     for (int i = 0; i < optionsSize; i++)
     {
-        string line = labels[i].second; // Dla menu głównego bierzemy tylko sam napis opcji
-        sf::Text text(line, font, 35);
-
-        // Domyślny styl dla nieaktywnego elementu
+        sf::Text text(labels[i], font, 50);
         text.setFillColor(inactiveColor);
         text.setOutlineColor(outlineColor);
         text.setOutlineThickness(2.f);
 
         sf::FloatRect Frame = text.getLocalBounds();
         text.setOrigin(Frame.left + Frame.width / 2.f, Frame.top + Frame.height / 2.f);
-        text.setPosition({ 400.f, (startingPosition + (itemHeight * i)) });
-
+        text.setPosition({ 400.f, (startingPositionMain + (100 * i)) });
         options.push_back(text);
+        selectorPositions.push_back(startingPositionMain + (100 * i));
     }
 
     menuCount = options.size();
+    maxScroll = 0.f; // Brak przewijania w menu startowym
 }
 
+// 2. Konstruktor dla ranking menu
+Menu::Menu(string menu_title, int optionsSize, vector<pair<int, string>> labels, sf::Font& font_arg)
+{
+    font = font_arg;
+    hasBackground = false; // Ranking nie potrzebuje tła obrazkowego
+
+    // Ustawienia tytułu rankingu
+    title.setFont(font);
+    title.setString(menu_title);
+    title.setCharacterSize(50);
+    title.setFillColor(activeColor);
+    title.setOutlineColor(sf::Color::Black);
+    title.setOutlineThickness(2.f);
+
+    sf::FloatRect titleFrame = title.getLocalBounds();
+    title.setOrigin(titleFrame.left + titleFrame.width / 2.f, titleFrame.top + titleFrame.height / 2.f);
+    title.setPosition({ 400.f, 50.f });
+
+    int filledCount = 0;
+
+    for (int i = 0; i < optionsSize; i++)
+    {
+        // Ignorujemy puste pozycje
+        if (labels[i].second.empty())
+        {
+            continue;
+        }
+
+        string line = std::to_string(labels[i].first) + " " + labels[i].second;
+        sf::Text text(line, font, 35);
+        text.setFillColor(sf::Color::White);
+        text.setOutlineColor(sf::Color::Black);
+        text.setOutlineThickness(1.5f);
+
+        sf::FloatRect Frame = text.getLocalBounds();
+        text.setOrigin(Frame.left + Frame.width / 2.f, Frame.top + Frame.height / 2.f);
+        text.setPosition({ 400.f, (startingPosition + (itemHeight * filledCount)) });
+
+        options.push_back(text);
+        selectorPositions.push_back(startingPosition + (itemHeight * filledCount));
+
+        filledCount++;
+    }
+
+    menuCount = options.size();
+
+    // Obliczenie maxScroll na podstawie faktycznie zapełnionych pozycji
+    float totalHeight = menuCount * itemHeight;
+    if (totalHeight > visibleHeight)
+    {
+        maxScroll = totalHeight - visibleHeight;
+    }
+    else
+    {
+        maxScroll = 0.f;
+    }
+}
+
+// 3. Konstruktor uproszczony
 Menu::Menu(string menu_title, sf::Font& font)
 {
-    //ustawienia tytulu menu
     title.setFont(font);
     title.setString(menu_title);
     title.setFillColor(sf::Color::Red);
     title.setCharacterSize(70);
     sf::FloatRect titleFrame = title.getLocalBounds();
     title.setOrigin(titleFrame.left + titleFrame.width / 2.f, titleFrame.top + titleFrame.height / 2.f);
-    title.setPosition({ 400.f,200.f });
+    title.setPosition({ 400.f, 200.f });
 }
-//aktualizacja vectora options, trzeba ja wywolac po kazdej zmianie w rankingu
-void Menu::optionsUpdate(vector <pair<int, string>> list)
+
+// Aktualizacja rankingu
+void Menu::optionsUpdate(vector<pair<int, string>> list)
 {
     options.clear();
     selectorPositions.clear();
+    scrollOffset = 0.f; // Resetujemy przewinięcie przy aktualizacji danych
 
-    float const startingPosition = 100.f;
-    for (int i = 0; i < list.size();i++)
+    int filledCount = 0;
+    for (int i = 0; i < list.size(); i++)
     {
-        string line;
-        line = std::to_string(list[i].first) + " " + list[i].second;
+        if (list[i].second.empty())
+        {
+            continue;
+        }
+
+        string line = std::to_string(list[i].first) + " " + list[i].second;
         sf::Text text(line, font, 35);
+        text.setFillColor(sf::Color::White);
+        text.setOutlineColor(sf::Color::Black);
+        text.setOutlineThickness(1.5f);
+
         sf::FloatRect Frame = text.getLocalBounds();
         text.setOrigin(Frame.left + Frame.width / 2.f, Frame.top + Frame.height / 2.f);
-        text.setPosition({ 400.f,(startingPosition + (40 * i)) });
+        text.setPosition({ 400.f, (startingPosition + (itemHeight * filledCount)) });
+
         options.push_back(text);
-        selectorPositions.push_back(startingPosition + (40 * i));
+        selectorPositions.push_back(startingPosition + (itemHeight * filledCount));
+
+        filledCount++;
     }
 
     menuCount = options.size();
+
+    // Ponowne obliczenie zakresu przewijania po aktualizacji
+    float totalHeight = menuCount * itemHeight;
+    if (totalHeight > visibleHeight)
+    {
+        maxScroll = totalHeight - visibleHeight;
+    }
+    else
+    {
+        maxScroll = 0.f;
+    }
 }
 
 void Menu::updateSelection(int selectedIndex)
@@ -193,15 +250,14 @@ void Menu::updateSelection(int selectedIndex)
         if (i == selectedIndex)
         {
             options[i].setFillColor(activeColor);
-            options[i].setCharacterSize(40); // Powiększenie wybranej opcji
+            options[i].setCharacterSize(52); // Dopasowane powiększenie do rozmiaru 50 w menu startowym
         }
         else
         {
             options[i].setFillColor(inactiveColor);
-            options[i].setCharacterSize(35); // Standardowy rozmiar
+            options[i].setCharacterSize(50);
         }
 
-        // Ponowne wycentrowanie origin po zmianie rozmiaru fontu
         sf::FloatRect frame = options[i].getLocalBounds();
         options[i].setOrigin(frame.left + frame.width / 2.f, frame.top + frame.height / 2.f);
     }
@@ -215,11 +271,9 @@ void Menu::drawBackground(sf::RenderWindow& window, int selectedIndex)
     }
     else
     {
-        // Alternatywne tło jednolite, gdy nie ma pliku graficznego
         window.clear(sf::Color(25, 25, 35));
     }
 
-    // Aktualizacja kolorów opcji przed narysowaniem
     updateSelection(selectedIndex);
 
     window.draw(title);
@@ -231,17 +285,15 @@ void Menu::drawBackground(sf::RenderWindow& window, int selectedIndex)
 
 void Menu::scroll(float delta)
 {
-    float scrollSpeed = 20.f; // Prędkość przewijania
+    float scrollSpeed = 20.f;
     float newOffset = scrollOffset - (delta * scrollSpeed);
 
-    // Ograniczenie przewijania do granic listy
     if (newOffset < 0.f) newOffset = 0.f;
     if (newOffset > maxScroll) newOffset = maxScroll;
 
     float difference = newOffset - scrollOffset;
     scrollOffset = newOffset;
 
-    // Przesunięcie wszystkich elementów o obliczoną różnicę
     for (auto& text : options)
     {
         text.move({ 0.f, -difference });
@@ -255,7 +307,7 @@ void Menu::draw(sf::RenderWindow& window)
     for (const auto& text : options)
     {
         float y = text.getPosition().y;
-        // Rysuj tylko, jeśli element znajduje się wewnątrz zdefiniowanego obszaru
+        // Rysowanie z obcinaniem elementów poza widocznym zakresem rankingu
         if (y >= startingPosition - 10.f && y <= startingPosition + visibleHeight)
         {
             window.draw(text);
@@ -263,7 +315,7 @@ void Menu::draw(sf::RenderWindow& window)
     }
 }
 
-//gettery
+// Gettery
 const char& Menu::getMenuCount() const { return menuCount; }
 const sf::Font& Menu::getFont() const { return font; }
 const sf::RectangleShape& Menu::getSelector() const { return selector; }
@@ -280,7 +332,7 @@ const vector<float>& Menu::getSelectorPositions() const { return selectorPositio
 //********************************************************************************************************************
 
 //konstruktor ptaka
-Bird::Bird() : velocity(0.f,0.f), gravity(550.f),jump(-300.f),xPosition(200.f),yPosition(400.f)
+Bird::Bird() : velocity(0.f,0.f), gravity(550.f),jump(-330.f),xPosition(200.f),yPosition(400.f)
 {
     move = 100.f;
     tex.loadFromFile("../resources/textures/bird.png");

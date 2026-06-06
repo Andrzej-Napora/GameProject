@@ -71,16 +71,15 @@ public:
 };
 
 
-//klasa do tworzenia roznych menu, np menu startowego i menu pause
 class Menu
 {
 private:
-	char menuCount;		//ilosc opcji wyboru w danym menu
+	char menuCount;
 	sf::Font font;
-	sf::RectangleShape selector;	//prostokat wyboru reagujacy na klawisze W/S
+	sf::RectangleShape selector;
 	sf::Text title;
-	vector<sf::Text> options;	//vector przechowujacy informacje o poszczegolnych skladowych menu, np ranking_list,settings itd.
-	vector<float> selectorPositions;	//vector przechowujacy pozycje, na ktore ma przemieszczac sie selector
+	vector<sf::Text> options;
+	vector<float> selectorPositions;
 	float scrollOffset = 0.f;
 	float maxScroll = 0.f;
 	float const startingPosition = 100.f;
@@ -92,15 +91,14 @@ private:
 	bool hasBackground = false;
 
 	// Kolory dla menu
-	sf::Color const activeColor = sf::Color(255, 204, 0);     // Złoty dla wybranej opcji
-	sf::Color const inactiveColor = sf::Color(180, 180, 180); // Szary dla nieaktywnych opcji
-	sf::Color const outlineColor = sf::Color(0, 0, 0, 200);   // Ciemny obrys tekstu
+	sf::Color const activeColor = sf::Color(255, 204, 0);
+	sf::Color const inactiveColor = sf::Color(180, 180, 180);
+	sf::Color const outlineColor = sf::Color(0, 0, 0, 200);
 public:
-	//glowny konstruktor menu
 	Menu(string menu_title, int optionsSize, vector<string> labels, sf::Font& font);
-	Menu(string menu_title, int optionsSize, vector<pair<int,string>> labels, sf::Font& font);
+	Menu(string menu_title, int optionsSize, vector<pair<int, string>> labels, sf::Font& font);
 	Menu(string menu_title, sf::Font& font);
-	//gettery i settery
+
 	const char& getMenuCount() const;
 	const sf::Font& getFont() const;
 	const sf::RectangleShape& getSelector() const;
@@ -108,7 +106,7 @@ public:
 	const sf::Text& getTitle() const;
 	const vector<sf::Text>& getOptions() const;
 	const vector<float>& getSelectorPositions() const;
-	void optionsUpdate(vector <pair<int,string>> list);
+	void optionsUpdate(vector<pair<int, string>> list);
 
 	void updateSelection(int selectedIndex);
 	void drawBackground(sf::RenderWindow& window, int selectedIndex);
