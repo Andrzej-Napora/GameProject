@@ -9,7 +9,7 @@
 //konstruktor domyslny
 GameWindow::GameWindow():width(window_size), height(window_size)
 {
-    tex.loadFromFile("../resources/textures/background.png");
+    tex.loadFromFile("resources/textures/background.png");
     sprite.setTexture(tex);
     sprite.setOrigin(0.f, 0.f);
 	window.create(sf::VideoMode(window_size, window_size), "Flappy birds - Menu");
@@ -73,7 +73,7 @@ Menu::Menu(string menu_title, int optionsSize, vector<string> labels, sf::Font& 
     font = font_arg;
 
     // Próba załadowania tła dla menu startowego
-    if (backgroundTexture.loadFromFile("../resources/textures/menu_bg.png"))
+    if (backgroundTexture.loadFromFile("resources/textures/menu_bg.png"))
     {
         backgroundSprite.setTexture(backgroundTexture);
         hasBackground = true;
@@ -335,7 +335,7 @@ const vector<float>& Menu::getSelectorPositions() const { return selectorPositio
 Bird::Bird() : velocity(0.f,0.f), gravity(550.f),jump(-330.f),xPosition(200.f),yPosition(400.f)
 {
     move = 100.f;
-    tex.loadFromFile("../resources/textures/bird.png");
+    tex.loadFromFile("resources/textures/bird.png");
     birdShape.setTexture(&tex);
     radius = static_cast<float>(tex.getSize().x) / 2.0f;
     birdShape.setRadius(45.f);
@@ -392,7 +392,7 @@ Score::Score() :score(0)
 {
     scoreText.setString(std::to_string(score));
     scoreText.setCharacterSize(30);
-    font.loadFromFile("Cabin-SemiBold.ttf");
+    font.loadFromFile("resources/textures/Cabin-SemiBold.ttf");
     scoreText.setFont(font);
     scoreText.setFillColor(sf::Color::Blue);
     scoreText.setPosition({ 700.f,50.f });
@@ -469,7 +469,7 @@ void RankingList::rankingListSave()
 
 Vortex::Vortex(int randomValue):spawnTimer(0),vortex(90.f),xPosition(800.f + 50.f),yPosition(600 + (randomValue)),force(18000)
 {
-    tex.loadFromFile("../resources/textures/vortex.png");
+    tex.loadFromFile("resources/textures/vortex.png");
     vortex.setTexture(&tex);
     velocity = { -200.f,0.f };
     vortex.setPosition({ xPosition, yPosition });

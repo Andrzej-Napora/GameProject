@@ -12,7 +12,7 @@ int main()
 
     //zmienna przechowuajca czcionke
     sf::Font font1;
-    font1.loadFromFile("Cabin-SemiBold.ttf");
+    font1.loadFromFile("resources/font/Cabin-SemiBold.ttf");
 
     //tworzenie obiektow poszczegolnych klas
     GameWindow gameWindow;

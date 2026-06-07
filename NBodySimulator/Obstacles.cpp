@@ -71,7 +71,7 @@ void ObstacleQueue::removeObstacleCondition(float dt)
 void ObstacleQueue::spawnObstacleCondition(float dt, int randomValue)
 {
     spawnTimer += dt;
-    if (spawnTimer > 2)
+    if (spawnTimer > 1.5)
     {
         addRandomObstacle(randomValue);
         spawnTimer = 0;
@@ -82,9 +82,9 @@ void ObstacleQueue::spawnObstacleCondition(float dt, int randomValue)
 void ObstacleQueue::addRandomObstacle(int randomValue)
 {
     DoubleObstacle doubleObs;
-    pipe.loadFromFile("../resources/textures/pipe.png");
+    pipe.loadFromFile("resources/textures/pipe.png");
 
-    sf::Vector2f velocity = { -100.f,0.f };
+    sf::Vector2f velocity = { -150.f,0.f };
     float xPosition = 800;
 
     //przeszkoda dolna

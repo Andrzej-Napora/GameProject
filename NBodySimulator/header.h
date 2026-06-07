@@ -164,7 +164,7 @@ class RankingList
 {
 private:
 	const short listSize = 100;
-	const string path = "../resources/RankingList/RankingList.txt";
+	const string path = "resources/RankingList/RankingList.txt";
 	vector<pair<int, string>> list;
 
 public:
