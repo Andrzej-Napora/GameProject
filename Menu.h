@@ -43,9 +43,9 @@ private:
   float scrollOffset = 0.f;
   float maxScroll = 0.f;
 
-  static constexpr float STARTING_POSITION = 100.f;
-  static constexpr float ITEM_HEIGHT = 40.f;
-  static constexpr float VISIBLE_HEIGHT = 450.f;
+  static constexpr float STARTING_POSITION = 220.f;
+  static constexpr float ITEM_HEIGHT = 55.f;
+  static constexpr float VISIBLE_HEIGHT = 530.f;
 
   sf::Texture backgroundTexture;
   sf::Sprite backgroundSprite;

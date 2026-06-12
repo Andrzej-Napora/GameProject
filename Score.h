@@ -10,7 +10,7 @@ public:
   [[nodiscard]] const sf::Text &getText() const;
 
   void setScore(int score);
-  void increment(float deltaTime);
+  void increment();
 
 private:
   unsigned int score;

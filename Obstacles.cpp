@@ -1,10 +1,10 @@
 #include "Obstacles.h"
 
 #include "GameConstants.h"
+#include <cmath>
 
 namespace {
 constexpr char PIPE_TEXTURE_PATH[] = "resources/textures/pipe.png";
-constexpr float OBSTACLE_SPEED = -150.f;
 constexpr float OBSTACLE_WIDTH = 50.f;
 constexpr float SCREEN_RIGHT_EDGE = 800.f;
 }
@@ -30,8 +30,21 @@ void Obstacle::update(float dt) {
   yPosition += velocity.y * dt;
 }
 
+void Obstacle::setVelocity(float velocityX, float velocityY) {
+  velocity.x = velocityX;
+  velocity.y = velocityY;
+}
+
 std::pair<Obstacle, Obstacle> &DoubleObstacle::getObstacles() {
   return obstacles;
+}
+
+bool DoubleObstacle::isPassed() const {
+  return passed;
+}
+
+void DoubleObstacle::setPassed(bool state) {
+  passed = state;
 }
 
 ObstacleQueue::ObstacleQueue() : spawnTimer(2.f) {
@@ -40,10 +53,23 @@ ObstacleQueue::ObstacleQueue() : spawnTimer(2.f) {
 
 std::deque<DoubleObstacle> &ObstacleQueue::getQueue() { return obstacleQueue; }
 
+float ObstacleQueue::getCurrentSpeed() const { return currentSpeed; }
+
 void ObstacleQueue::reset() {
   spawnTimer = 0.f;
   removeTimer = 0.f;
+  currentSpeed = -150.f;
   obstacleQueue.clear();
+}
+
+void ObstacleQueue::updateSpeed(int currentScore, bool isSlowed) {
+  const float baseSpeed = -150.f - (static_cast<float>(currentScore) * 6.f);
+  currentSpeed = isSlowed ? baseSpeed * 0.4f : baseSpeed;
+
+  for (auto &doubleObstacle : obstacleQueue) {
+    doubleObstacle.getObstacles().first.setVelocity(currentSpeed, 0.f);
+    doubleObstacle.getObstacles().second.setVelocity(currentSpeed, 0.f);
+  }
 }
 
 void ObstacleQueue::removeOutOfScreenObstacles(float dt) {
@@ -62,7 +88,8 @@ void ObstacleQueue::removeOutOfScreenObstacles(float dt) {
 
 void ObstacleQueue::spawnObstacleIfNeeded(float dt, int randomValue) {
   spawnTimer += dt;
-  if (spawnTimer > 1.5f) {
+  const float targetInterval = 350.f / std::abs(currentSpeed);
+  if (spawnTimer > targetInterval) {
     addRandomObstacle(randomValue);
     spawnTimer = 0.f;
   }
@@ -70,7 +97,7 @@ void ObstacleQueue::spawnObstacleIfNeeded(float dt, int randomValue) {
 
 void ObstacleQueue::addRandomObstacle(int randomValue) {
   DoubleObstacle doubleObstacle;
-  const sf::Vector2f velocity = {OBSTACLE_SPEED, 0.f};
+  const sf::Vector2f velocity = {currentSpeed, 0.f};
 
   const float upperHeight = 50.f + (4.0f * randomValue);
   const float bottomYPosition = upperHeight + 250.f;

@@ -3,6 +3,7 @@
 #include "GameWindow.h"
 #include "Menu.h"
 #include "Obstacles.h"
+#include "PowerUp.h"
 #include "RankingList.h"
 #include "Score.h"
 #include "User.h"
@@ -73,11 +74,19 @@ int main() {
   ObstacleQueue obstacleQueue;
   Score score;
   Vortex vortex(randomValue);
+  PowerUp powerUp;
 
   rankingMenu.optionsUpdate(rankingList.getList());
 
   int selectedIndex = 0;
   bool nicknameSet = false;
+  bool isSlowed = false;
+  int slowObstaclesRemaining = 0;
+
+  sf::RectangleShape slowEffectTint;
+  slowEffectTint.setSize({800.f, 800.f});
+  slowEffectTint.setFillColor(sf::Color(0, 255, 255, 40));
+
   sf::Clock clock;
 
   while (gameWindow.getWindow().isOpen()) {
@@ -201,15 +210,46 @@ int main() {
       obstacleQueue.spawnObstacleIfNeeded(deltaTime, randomValue);
       obstacleQueue.removeOutOfScreenObstacles(deltaTime);
       vortex.update(deltaTime, randomValue);
+      powerUp.update(deltaTime, obstacleQueue.getCurrentSpeed());
+
+      const sf::FloatRect birdFrame = bird.getBirdShape().getGlobalBounds();
+
+      if (powerUp.isActive() && birdFrame.intersects(powerUp.getBounds())) {
+        powerUp.collect();
+        isSlowed = true;
+        slowObstaclesRemaining = 5;
+        obstacleQueue.updateSpeed(score.getScore(), isSlowed);
+      }
 
       for (auto &obstacle : obstacleQueue.getQueue()) {
         obstacle.getObstacles().first.update(deltaTime);
         obstacle.getObstacles().second.update(deltaTime);
       }
 
-      score.increment(deltaTime);
+      const float birdX = bird.getXPosition();
+      for (auto &obstacle : obstacleQueue.getQueue()) {
+        if (!obstacle.isPassed() &&
+            birdX > obstacle.getObstacles().first.getXPosition() +
+                        obstacle.getObstacles().first.getXSize()) {
+          obstacle.setPassed(true);
+          score.increment();
 
-      const sf::FloatRect birdFrame = bird.getBirdShape().getGlobalBounds();
+          if (isSlowed) {
+            slowObstaclesRemaining--;
+            if (slowObstaclesRemaining <= 0) {
+              isSlowed = false;
+            }
+          }
+
+          obstacleQueue.updateSpeed(score.getScore(), isSlowed);
+
+          if (score.getScore() % 10 == 0 && score.getScore() > 0 &&
+              !isSlowed && !powerUp.isActive()) {
+            powerUp.spawn(randomValue);
+          }
+        }
+      }
+
       bool hasCollided = birdFrame.left < 0.f || birdFrame.left + birdFrame.width > 800.f ||
                          birdFrame.top < 0.f || birdFrame.top + birdFrame.height > 800.f;
 
@@ -220,11 +260,11 @@ int main() {
           const sf::FloatRect bottomObstacleFrame =
               obstacle.getObstacles().second.getShape().getGlobalBounds();
 
-          if (birdFrame.intersects(upperObstacleFrame) ||
-              birdFrame.intersects(bottomObstacleFrame)) {
-            hasCollided = true;
-            break;
-          }
+          //if (birdFrame.intersects(upperObstacleFrame) ||
+          //    birdFrame.intersects(bottomObstacleFrame)) {
+          //  hasCollided = true;
+          //  break;
+          //}
         }
       }
 
@@ -232,6 +272,9 @@ int main() {
         bird.reset();
         obstacleQueue.reset();
         vortex.reset(randomValue);
+        powerUp.reset();
+        isSlowed = false;
+        slowObstaclesRemaining = 0;
 
         if (shouldSaveScore(score)) {
           rankingList.update(score, user);
@@ -247,7 +290,13 @@ int main() {
         gameWindow.getWindow().draw(obstacle.getObstacles().second.getShape());
       }
       gameWindow.getWindow().draw(vortex.getShape());
+      if (powerUp.isActive()) {
+        gameWindow.getWindow().draw(powerUp.getSprite());
+      }
       gameWindow.getWindow().draw(bird.getBirdShape());
+      if (isSlowed) {
+        gameWindow.getWindow().draw(slowEffectTint);
+      }
       gameWindow.getWindow().draw(score.getText());
     }
 

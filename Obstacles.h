@@ -19,6 +19,7 @@ public:
   [[nodiscard]] sf::RectangleShape &getShape();
 
   void update(float dt);
+  void setVelocity(float velocityX, float velocityY);
 
 private:
   sf::RectangleShape shape;
@@ -32,9 +33,13 @@ private:
 class DoubleObstacle {
 public:
   [[nodiscard]] std::pair<Obstacle, Obstacle> &getObstacles();
+  [[nodiscard]] bool isPassed() const;
+
+  void setPassed(bool state);
 
 private:
   std::pair<Obstacle, Obstacle> obstacles;
+  bool passed = false;
 };
 
 class ObstacleQueue {
@@ -42,10 +47,12 @@ public:
   ObstacleQueue();
 
   [[nodiscard]] std::deque<DoubleObstacle> &getQueue();
+  [[nodiscard]] float getCurrentSpeed() const;
 
   void removeOutOfScreenObstacles(float dt);
   void spawnObstacleIfNeeded(float dt, int randomValue);
   void reset();
+  void updateSpeed(int currentScore, bool isSlowed = false);
 
 private:
   void addRandomObstacle(int randomValue);
@@ -54,4 +61,5 @@ private:
   float spawnTimer = 0.f;
   float removeTimer = 0.f;
   sf::Texture pipeTexture;
+  float currentSpeed = -150.f;
 };

@@ -30,6 +30,8 @@ add_executable(GameProject
         Vortex.h
         sqlite/sqlite3.c
         sqlite/sqlite3.h
+        PowerUp.cpp
+        PowerUp.h
 )
 
 target_include_directories(GameProject PRIVATE "C:/SFML/include")

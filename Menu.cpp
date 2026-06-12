@@ -23,7 +23,7 @@ Menu::Menu(const std::string &menuTitle, int optionsSize,
   selector.setFillColor(sf::Color(255, 255, 255, 100));
   selector.setOrigin(250.f, 30.f);
 
-  setupTitle(menuTitle, 50, activeColor, 50.f, 3.f);
+  setupTitle(menuTitle, 60, activeColor, 80.f, 3.f);
 
   for (int i = 0; i < optionsSize && i < static_cast<int>(labels.size()); ++i) {
     const float yPosition = startingPositionMain + (100.f * i);
@@ -39,7 +39,16 @@ Menu::Menu(const std::string &menuTitle, int optionsSize,
            const std::vector<std::pair<int, std::string>> &labels,
            sf::Font &fontArg)
     : font(fontArg) {
-  setupTitle(menuTitle, 50, activeColor, 50.f, 2.f);
+
+  if (backgroundTexture.loadFromFile(MENU_BACKGROUND_PATH)) {
+    backgroundSprite.setTexture(backgroundTexture);
+    hasBackground = true;
+
+    const sf::Vector2u textureSize = backgroundTexture.getSize();
+    backgroundSprite.setScale(800.f / textureSize.x, 800.f / textureSize.y);
+  }
+
+  setupTitle(menuTitle, 60, activeColor, 60.f, 3.f);
 
   const int safeOptionsSize =
       std::min(optionsSize, static_cast<int>(labels.size()));
@@ -50,11 +59,26 @@ Menu::Menu(const std::string &menuTitle, int optionsSize,
       continue;
     }
 
-    const std::string line =
-        std::to_string(labels[i].first) + " " + labels[i].second;
+    const std::string prefix = std::to_string(i + 1) + ". ";
+    const std::string line = prefix + labels[i].second + " : " + std::to_string(labels[i].first);
+
+    sf::Color textColor = sf::Color::White;
+    unsigned int charSize = 35;
+
+    if (i == 0) {
+        textColor = sf::Color(255, 215, 0);
+        charSize = 45;
+    } else if (i == 1) {
+        textColor = sf::Color(192, 192, 192);
+        charSize = 42;
+    } else if (i == 2) {
+        textColor = sf::Color(205, 127, 50);
+        charSize = 40;
+    }
+
     const float yPosition = STARTING_POSITION + (ITEM_HEIGHT * filledCount);
     options.push_back(
-        createCenteredText(line, 35, sf::Color::White, yPosition));
+        createCenteredText(line, charSize, textColor, yPosition));
     selectorPositions.push_back(yPosition);
     ++filledCount;
   }
@@ -64,7 +88,7 @@ Menu::Menu(const std::string &menuTitle, int optionsSize,
 }
 
 Menu::Menu(const std::string &menuTitle, sf::Font &fontArg) : font(fontArg) {
-  setupTitle(menuTitle, 70, sf::Color::Red, 200.f, 0.f);
+  setupTitle(menuTitle, 80, sf::Color::Red, 200.f, 4.f);
 }
 
 void Menu::optionsUpdate(const std::vector<std::pair<int, std::string>> &list) {
@@ -73,15 +97,31 @@ void Menu::optionsUpdate(const std::vector<std::pair<int, std::string>> &list) {
   scrollOffset = 0.f;
 
   int filledCount = 0;
-  for (const auto &[score, nickname] : list) {
-    if (nickname.empty()) {
+  for (size_t i = 0; i < list.size(); ++i) {
+    if (list[i].second.empty()) {
       continue;
     }
 
-    const std::string line = std::to_string(score) + " " + nickname;
+    const std::string prefix = std::to_string(i + 1) + ". ";
+    const std::string line = prefix + list[i].second + " : " + std::to_string(list[i].first);
+
+    sf::Color textColor = sf::Color::White;
+    unsigned int charSize = 35;
+
+    if (i == 0) {
+        textColor = sf::Color(255, 215, 0);
+        charSize = 45;
+    } else if (i == 1) {
+        textColor = sf::Color(192, 192, 192);
+        charSize = 42;
+    } else if (i == 2) {
+        textColor = sf::Color(205, 127, 50);
+        charSize = 40;
+    }
+
     const float yPosition = STARTING_POSITION + (ITEM_HEIGHT * filledCount);
     options.push_back(
-        createCenteredText(line, 35, sf::Color::White, yPosition));
+        createCenteredText(line, charSize, textColor, yPosition));
     selectorPositions.push_back(yPosition);
     ++filledCount;
   }
@@ -116,7 +156,7 @@ void Menu::drawBackground(sf::RenderWindow &window, int selectedIndex) {
 }
 
 void Menu::scroll(float delta) {
-  constexpr float scrollSpeed = 20.f;
+  constexpr float scrollSpeed = 30.f;
   const float newOffset =
       std::clamp(scrollOffset - (delta * scrollSpeed), 0.f, maxScroll);
   const float difference = newOffset - scrollOffset;
@@ -128,11 +168,17 @@ void Menu::scroll(float delta) {
 }
 
 void Menu::draw(sf::RenderWindow &window) {
+  if (hasBackground) {
+    window.draw(backgroundSprite);
+  } else {
+    window.clear(sf::Color(25, 25, 35));
+  }
+
   window.draw(title);
 
   for (const auto &text : options) {
     const float y = text.getPosition().y;
-    if (y >= STARTING_POSITION - 10.f &&
+    if (y >= STARTING_POSITION - 20.f &&
         y <= STARTING_POSITION + VISIBLE_HEIGHT) {
       window.draw(text);
     }
@@ -170,7 +216,7 @@ sf::Text Menu::createCenteredText(const std::string &textValue,
   sf::Text text(textValue, font, characterSize);
   text.setFillColor(fillColor);
   text.setOutlineColor(outlineColor);
-  text.setOutlineThickness(characterSize >= 50 ? 2.f : 1.5f);
+  text.setOutlineThickness(characterSize >= 40 ? 2.f : 1.5f);
 
   const sf::FloatRect frame = text.getLocalBounds();
   text.setOrigin(frame.left + frame.width / 2.f,

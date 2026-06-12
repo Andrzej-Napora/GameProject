@@ -3,7 +3,7 @@
 #include <string>
 
 namespace {
-constexpr char SCORE_FONT_PATH[] = "resources/font/Cabin-SemiBold.ttf";
+  constexpr char SCORE_FONT_PATH[] = "resources/font/Cabin-SemiBold.ttf";
 }
 
 Score::Score() : score(0) {
@@ -23,7 +23,7 @@ void Score::setScore(int newScore) {
   scoreText.setString(std::to_string(score));
 }
 
-void Score::increment(float deltaTime) {
-  score += static_cast<unsigned int>(60.f * deltaTime);
+void Score::increment() {
+  score += 1;
   scoreText.setString(std::to_string(score));
 }
