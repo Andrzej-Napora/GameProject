@@ -3,14 +3,16 @@
 #include "GameWindow.h"
 #include "Menu.h"
 #include "Obstacles.h"
-#include "PowerUp.h"
 #include "RankingList.h"
 #include "Score.h"
 #include "User.h"
 #include "Vortex.h"
+#include "SlowPowerUp.h"
+#include "ShieldPowerUp.h"
 
 #include <SFML/Graphics.hpp>
 #include <algorithm>
+#include <memory>
 #include <random>
 #include <string>
 #include <vector>
@@ -19,32 +21,24 @@ namespace {
 constexpr char MAIN_FONT_PATH[] = "resources/font/Cabin-SemiBold.ttf";
 
 bool isTopMenuInput(const sf::Event &event) {
-  return event.type == sf::Event::KeyPressed &&
-         (event.key.code == sf::Keyboard::W ||
-          event.key.code == sf::Keyboard::Up);
+  return event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::W || event.key.code == sf::Keyboard::Up);
 }
 
 bool isBottomMenuInput(const sf::Event &event) {
-  return event.type == sf::Event::KeyPressed &&
-         (event.key.code == sf::Keyboard::S ||
-          event.key.code == sf::Keyboard::Down);
+  return event.type == sf::Event::KeyPressed && (event.key.code == sf::Keyboard::S || event.key.code == sf::Keyboard::Down);
 }
 
 bool isConfirmInput(const sf::Event &event) {
-  return event.type == sf::Event::KeyPressed &&
-         event.key.code == sf::Keyboard::Enter;
+  return event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Enter;
 }
 
 bool isBackInput(const sf::Event &event) {
-  return event.type == sf::Event::KeyPressed &&
-         event.key.code == sf::Keyboard::Escape;
+  return event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape;
 }
 
 bool isRestartInput(const sf::Event &event) {
-  return (event.type == sf::Event::KeyPressed &&
-          event.key.code == sf::Keyboard::Space) ||
-         (event.type == sf::Event::MouseButtonPressed &&
-          event.mouseButton.button == sf::Mouse::Left);
+  return (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space) ||
+         (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left);
 }
 
 bool shouldSaveScore(const Score &score) {
@@ -64,45 +58,52 @@ int main() {
   GameWindow gameWindow;
   User user(mainFont);
   RankingList rankingList;
-  Menu startingMenu("FLAPPY BIRD", 4,
-                    {"Graj", "Ranking", "Zmien nick", "Wyjscie"}, mainFont);
+  Menu startingMenu("FLAPPY BIRD", 4, {"Graj", "Ranking", "Zmien nick", "Wyjscie"}, mainFont);
   Menu gameOverMenu("Koniec gry", mainFont);
-  Menu rankingMenu("Ranking", static_cast<int>(rankingList.getList().size()),
-                   rankingList.getList(), mainFont);
+  Menu rankingMenu("Ranking", static_cast<int>(rankingList.getList().size()), rankingList.getList(), mainFont);
   GameState currentGameState = GameState::NicknameInput;
   Bird bird;
   ObstacleQueue obstacleQueue;
   Score score;
   Vortex vortex(randomValue);
-  PowerUp powerUp;
+
+  std::vector<std::unique_ptr<PowerUp>> powerUps;
+  powerUps.push_back(std::make_unique<SlowPowerUp>());
+  powerUps.push_back(std::make_unique<ShieldPowerUp>());
 
   rankingMenu.optionsUpdate(rankingList.getList());
 
   int selectedIndex = 0;
   bool nicknameSet = false;
   bool isSlowed = false;
+  bool hasShield = false;
   int slowObstaclesRemaining = 0;
 
   sf::RectangleShape slowEffectTint;
   slowEffectTint.setSize({800.f, 800.f});
   slowEffectTint.setFillColor(sf::Color(0, 255, 255, 40));
 
+  sf::CircleShape shieldAura;
+  shieldAura.setRadius(55.f);
+  shieldAura.setFillColor(sf::Color::Transparent);
+  shieldAura.setOutlineColor(sf::Color(0, 255, 0, 150));
+  shieldAura.setOutlineThickness(5.f);
+  shieldAura.setOrigin({55.f, 55.f});
+
   sf::Clock clock;
 
-  while (gameWindow.getWindow().isOpen()) {
+  while(gameWindow.getWindow().isOpen()) {
     float deltaTime = std::min(clock.restart().asSeconds(), 0.05f);
 
     sf::Event event;
-    while (gameWindow.getWindow().pollEvent(event)) {
+    while(gameWindow.getWindow().pollEvent(event)) {
       const GameState stateBeforeEvent = currentGameState;
 
-      if (event.type == sf::Event::Closed) {
-        gameWindow.getWindow().close();
-      }
+      if(event.type == sf::Event::Closed) gameWindow.getWindow().close();
 
-      if (stateBeforeEvent == GameState::StartingMenu) {
-        if (isConfirmInput(event)) {
-          switch (selectedIndex) {
+      if(stateBeforeEvent == GameState::StartingMenu) {
+        if(isConfirmInput(event)) {
+          switch(selectedIndex) {
           case 0:
             currentGameState = GameState::Playing;
             break;
@@ -117,66 +118,64 @@ int main() {
           default:
             break;
           }
-        } else if (isTopMenuInput(event)) {
-          selectedIndex = selectedIndex <= 0 ? startingMenu.getMenuCount() - 1
-                                             : selectedIndex - 1;
-        } else if (isBottomMenuInput(event)) {
-          selectedIndex = selectedIndex >= startingMenu.getMenuCount() - 1
-                              ? 0
-                              : selectedIndex + 1;
+        }
+        else if(isTopMenuInput(event)) {
+          selectedIndex = selectedIndex <= 0 ? startingMenu.getMenuCount() - 1 : selectedIndex - 1;
+        }
+        else if(isBottomMenuInput(event)) {
+          selectedIndex = selectedIndex >= startingMenu.getMenuCount() - 1 ? 0 : selectedIndex + 1;
         }
       }
 
-      if (stateBeforeEvent == GameState::RankingList) {
-        if (isBackInput(event)) {
+      if(stateBeforeEvent == GameState::RankingList) {
+        if(isBackInput(event)) {
           currentGameState = GameState::StartingMenu;
-        } else if (event.type == sf::Event::KeyPressed &&
-                   event.key.code == sf::Keyboard::Up) {
+        }
+        else if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Up) {
           rankingMenu.scroll(1.f);
-        } else if (event.type == sf::Event::KeyPressed &&
-                   event.key.code == sf::Keyboard::Down) {
+        }
+        else if(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Down) {
           rankingMenu.scroll(-1.f);
-        } else if (event.type == sf::Event::MouseWheelScrolled &&
-                   event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
+        }
+        else if(event.type == sf::Event::MouseWheelScrolled && event.mouseWheelScroll.wheel == sf::Mouse::VerticalWheel) {
           rankingMenu.scroll(event.mouseWheelScroll.delta);
         }
       }
 
-      if (stateBeforeEvent == GameState::Playing) {
-        if (event.type == sf::Event::KeyPressed) {
-          if (event.key.code == sf::Keyboard::Space) {
+      if(stateBeforeEvent == GameState::Playing) {
+        if(event.type == sf::Event::KeyPressed) {
+          if(event.key.code == sf::Keyboard::Space) {
             bird.jumpHandle();
-          } else if (event.key.code == sf::Keyboard::A ||
-                     event.key.code == sf::Keyboard::Left) {
+          }
+          else if(event.key.code == sf::Keyboard::A || event.key.code == sf::Keyboard::Left) {
             bird.leftMovementHandle();
-          } else if (event.key.code == sf::Keyboard::D ||
-                     event.key.code == sf::Keyboard::Right) {
+          }
+          else if(event.key.code == sf::Keyboard::D || event.key.code == sf::Keyboard::Right) {
             bird.rightMovementHandle();
           }
-        } else if (event.type == sf::Event::MouseButtonPressed &&
-                   event.mouseButton.button == sf::Mouse::Left) {
+        }
+        else if(event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left) {
           bird.jumpHandle();
         }
       }
 
-      if (stateBeforeEvent == GameState::GameOver && isRestartInput(event)) {
+      if(stateBeforeEvent == GameState::GameOver && isRestartInput(event)) {
         score.setScore(0);
         currentGameState = GameState::StartingMenu;
       }
 
-      if (stateBeforeEvent == GameState::NicknameInput) {
-        if (event.type == sf::Event::TextEntered && event.text.unicode < 128) {
-          if (event.text.unicode == 8) {
-            if (!user.getName().empty()) {
-              user.getName().pop_back();
-            }
-          } else if (event.text.unicode >= 32) {
+      if(stateBeforeEvent == GameState::NicknameInput) {
+        if(event.type == sf::Event::TextEntered && event.text.unicode < 128) {
+          if(event.text.unicode == 8) {
+            if(!user.getName().empty()) user.getName().pop_back();
+          }
+          else if(event.text.unicode >= 32) {
             user.getName() += static_cast<char>(event.text.unicode);
           }
         }
 
-        if (isConfirmInput(event)) {
-          if (!user.getName().empty()) {
+        if(isConfirmInput(event)) {
+          if(!user.getName().empty()) {
             nicknameSet = true;
             currentGameState = GameState::StartingMenu;
           }
@@ -186,97 +185,113 @@ int main() {
 
     gameWindow.getWindow().clear();
 
-    if (currentGameState == GameState::StartingMenu) {
-      startingMenu.getSelectorMod().setPosition(
-          400.f, startingMenu.getSelectorPositions()[selectedIndex]);
+    if(currentGameState == GameState::StartingMenu) {
+      startingMenu.getSelectorMod().setPosition(400.f, startingMenu.getSelectorPositions()[selectedIndex]);
       startingMenu.drawBackground(gameWindow.getWindow(), selectedIndex);
       gameWindow.getWindow().draw(startingMenu.getSelector());
-    } else if (currentGameState == GameState::RankingList) {
+    }
+    else if(currentGameState == GameState::RankingList) {
       rankingMenu.draw(gameWindow.getWindow());
-    } else if (currentGameState == GameState::NicknameInput) {
+    }
+    else if(currentGameState == GameState::NicknameInput) {
       user.updateNameText();
-      const std::string promptText =
-          nicknameSet ? "Wprowadz nowy nick" : "Podaj nick";
+      const std::string promptText = nicknameSet ? "Wprowadz nowy nick" : "Podaj nick";
       sf::Text prompt(promptText, mainFont, 40);
       prompt.setPosition({60.f, 100.f});
       gameWindow.getWindow().draw(prompt);
       gameWindow.getWindow().draw(user.getNameText());
-    } else if (currentGameState == GameState::GameOver) {
+    }
+    else if(currentGameState == GameState::GameOver) {
       gameWindow.getWindow().draw(gameOverMenu.getTitle());
-    } else if (currentGameState == GameState::Playing) {
+    }
+    else if(currentGameState == GameState::Playing) {
       bird.update(deltaTime, vortex.calculateGravity(bird));
 
       randomValue = distribution(generator);
       obstacleQueue.spawnObstacleIfNeeded(deltaTime, randomValue);
       obstacleQueue.removeOutOfScreenObstacles(deltaTime);
       vortex.update(deltaTime, randomValue);
-      powerUp.update(deltaTime, obstacleQueue.getCurrentSpeed());
 
       const sf::FloatRect birdFrame = bird.getBirdShape().getGlobalBounds();
 
-      if (powerUp.isActive() && birdFrame.intersects(powerUp.getBounds())) {
-        powerUp.collect();
-        isSlowed = true;
-        slowObstaclesRemaining = 5;
-        obstacleQueue.updateSpeed(score.getScore(), isSlowed);
+      for(auto &p : powerUps) {
+        p->update(deltaTime, obstacleQueue.getCurrentSpeed());
+        if(p->isActive() && birdFrame.intersects(p->getBounds())) {
+          p->collect();
+          if(dynamic_cast<SlowPowerUp*>(p.get())) {
+            isSlowed = true;
+            slowObstaclesRemaining = 5;
+            obstacleQueue.updateSpeed(score.getScore(), isSlowed);
+          }
+          else if(dynamic_cast<ShieldPowerUp*>(p.get())) {
+            hasShield = true;
+          }
+        }
       }
 
-      for (auto &obstacle : obstacleQueue.getQueue()) {
+      if(hasShield) shieldAura.setPosition(birdFrame.left + birdFrame.width / 2.f, birdFrame.top + birdFrame.height / 2.f);
+
+      for(auto &obstacle : obstacleQueue.getQueue()) {
         obstacle.getObstacles().first.update(deltaTime);
         obstacle.getObstacles().second.update(deltaTime);
       }
 
       const float birdX = bird.getXPosition();
-      for (auto &obstacle : obstacleQueue.getQueue()) {
-        if (!obstacle.isPassed() &&
-            birdX > obstacle.getObstacles().first.getXPosition() +
-                        obstacle.getObstacles().first.getXSize()) {
+      for(auto &obstacle : obstacleQueue.getQueue()) {
+        if(!obstacle.isPassed() && birdX > obstacle.getObstacles().first.getXPosition() + obstacle.getObstacles().first.getXSize()) {
           obstacle.setPassed(true);
           score.increment();
 
-          if (isSlowed) {
+          if(isSlowed) {
             slowObstaclesRemaining--;
-            if (slowObstaclesRemaining <= 0) {
-              isSlowed = false;
-            }
+            if(slowObstaclesRemaining <= 0) isSlowed = false;
           }
 
           obstacleQueue.updateSpeed(score.getScore(), isSlowed);
 
-          if (score.getScore() % 10 == 0 && score.getScore() > 0 &&
-              !isSlowed && !powerUp.isActive()) {
-            powerUp.spawn(randomValue);
+          if(score.getScore() % 5 == 0 && score.getScore() > 0 && !isSlowed && !hasShield) {
+            bool anyActive = false;
+            for(const auto &p : powerUps) {
+              if(p->isActive()) anyActive = true;
+            }
+            if(!anyActive) {
+              for(auto &p : powerUps) p->spawn(randomValue);
+            }
           }
         }
       }
 
-      bool hasCollided = birdFrame.left < 0.f || birdFrame.left + birdFrame.width > 800.f ||
-                         birdFrame.top < 0.f || birdFrame.top + birdFrame.height > 800.f;
+      bool hasCollided = birdFrame.left < 0.f || birdFrame.left + birdFrame.width > 800.f || birdFrame.top < 0.f || birdFrame.top + birdFrame.height > 800.f;
 
-      if (!hasCollided) {
-        for (auto &obstacle : obstacleQueue.getQueue()) {
-          const sf::FloatRect upperObstacleFrame =
-              obstacle.getObstacles().first.getShape().getGlobalBounds();
-          const sf::FloatRect bottomObstacleFrame =
-              obstacle.getObstacles().second.getShape().getGlobalBounds();
+      if(!hasCollided) {
+        for(auto &obstacle : obstacleQueue.getQueue()) {
+          const sf::FloatRect upperObstacleFrame = obstacle.getObstacles().first.getShape().getGlobalBounds();
+          const sf::FloatRect bottomObstacleFrame = obstacle.getObstacles().second.getShape().getGlobalBounds();
 
-          //if (birdFrame.intersects(upperObstacleFrame) ||
-          //    birdFrame.intersects(bottomObstacleFrame)) {
-          //  hasCollided = true;
-          //  break;
-          //}
+          if(birdFrame.intersects(upperObstacleFrame) || birdFrame.intersects(bottomObstacleFrame)) {
+            if(hasShield) {
+              hasShield = false;
+              obstacle.getObstacles().first.getShape().setPosition(-1000.f, -1000.f);
+              obstacle.getObstacles().second.getShape().setPosition(-1000.f, -1000.f);
+            }
+            else {
+              hasCollided = true;
+              break;
+            }
+          }
         }
       }
 
-      if (hasCollided) {
+      if(hasCollided) {
         bird.reset();
         obstacleQueue.reset();
         vortex.reset(randomValue);
-        powerUp.reset();
+        for(auto &p : powerUps) p->reset();
         isSlowed = false;
+        hasShield = false;
         slowObstaclesRemaining = 0;
 
-        if (shouldSaveScore(score)) {
+        if(shouldSaveScore(score)) {
           rankingList.update(score, user);
           rankingMenu.optionsUpdate(rankingList.getList());
         }
@@ -285,18 +300,19 @@ int main() {
       }
 
       gameWindow.getWindow().draw(gameWindow.getSprite());
-      for (auto &obstacle : obstacleQueue.getQueue()) {
+      for(auto &obstacle : obstacleQueue.getQueue()) {
         gameWindow.getWindow().draw(obstacle.getObstacles().first.getShape());
         gameWindow.getWindow().draw(obstacle.getObstacles().second.getShape());
       }
       gameWindow.getWindow().draw(vortex.getShape());
-      if (powerUp.isActive()) {
-        gameWindow.getWindow().draw(powerUp.getSprite());
+
+      for(auto &p : powerUps) {
+        if(p->isActive()) gameWindow.getWindow().draw(p->getSprite());
       }
+
       gameWindow.getWindow().draw(bird.getBirdShape());
-      if (isSlowed) {
-        gameWindow.getWindow().draw(slowEffectTint);
-      }
+      if(hasShield) gameWindow.getWindow().draw(shieldAura);
+      if(isSlowed) gameWindow.getWindow().draw(slowEffectTint);
       gameWindow.getWindow().draw(score.getText());
     }
 

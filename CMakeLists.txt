@@ -32,6 +32,10 @@ add_executable(GameProject
         sqlite/sqlite3.h
         PowerUp.cpp
         PowerUp.h
+        ShieldPowerUp.cpp
+        ShieldPowerUp.h
+        SlowPowerUp.cpp
+        SlowPowerUp.h
 )
 
 target_include_directories(GameProject PRIVATE "C:/SFML/include")
